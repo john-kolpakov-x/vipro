@@ -4,7 +4,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 
-import kz.pompei.vipro.model.MethodDefinition;
+import kz.pompei.vipro.model.block.BlockMethodDefinition;
 
 public class SchemaProducerDef implements SchemaProducer {
   
@@ -15,7 +15,7 @@ public class SchemaProducerDef implements SchemaProducer {
   }
   
   @Override
-  public MethodDefinitionSchema forMethodDefinition(MethodDefinition md, Point mouse) {
+  public MethodDefinitionSchema forMethodDefinition(BlockMethodDefinition md, Point mouse) {
     MethodDefinitionSchema ret = new MethodDefinitionSchema();
     ret.x = ret.y = 0;
     Point loc = md.location;

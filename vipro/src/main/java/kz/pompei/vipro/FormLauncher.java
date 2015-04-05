@@ -5,7 +5,7 @@ import java.awt.Point;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
-import kz.pompei.vipro.model.MethodDefinition;
+import kz.pompei.vipro.model.block.BlockMethodDefinition;
 
 public class FormLauncher {
   public static void main(String[] args) throws Exception {
@@ -26,10 +26,10 @@ public class FormLauncher {
     
     ViproEditorPanel p = new ViproEditorPanel();
     {
-      MethodDefinition md = new MethodDefinition();
+      BlockMethodDefinition md = new BlockMethodDefinition();
       md.location = new Point(100, 100);
       md.name = "prepareLocation";
-      p.source.methodList.add(md);
+      p.source.content.add(md);
     }
     f.setContentPane(p);
     

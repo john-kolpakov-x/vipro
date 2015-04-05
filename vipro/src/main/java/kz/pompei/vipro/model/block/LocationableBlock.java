@@ -1,4 +1,4 @@
-package kz.pompei.vipro.model;
+package kz.pompei.vipro.model.block;
 
 import java.awt.Point;
 

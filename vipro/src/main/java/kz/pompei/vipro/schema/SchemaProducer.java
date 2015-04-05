@@ -2,8 +2,8 @@ package kz.pompei.vipro.schema;
 
 import java.awt.Point;
 
-import kz.pompei.vipro.model.MethodDefinition;
+import kz.pompei.vipro.model.block.BlockMethodDefinition;
 
 public interface SchemaProducer {
-  MethodDefinitionSchema forMethodDefinition(MethodDefinition md, Point mouse);
+  MethodDefinitionSchema forMethodDefinition(BlockMethodDefinition md, Point mouse);
 }

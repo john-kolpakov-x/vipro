@@ -1,6 +1,6 @@
-package kz.pompei.vipro.model;
+package kz.pompei.vipro.model.block;
 
-public class MethodDefinition extends LocationableBlock {
+public class BlockMethodDefinition extends LocationableBlock {
   public String name;
   
   @Override

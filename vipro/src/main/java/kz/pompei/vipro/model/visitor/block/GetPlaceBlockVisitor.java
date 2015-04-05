@@ -1,8 +1,10 @@
 package kz.pompei.vipro.model.visitor.block;
 
-import kz.pompei.vipro.model.BlockClass;
-import kz.pompei.vipro.model.BlockVisitor;
-import kz.pompei.vipro.model.MethodDefinition;
+import kz.pompei.vipro.model.block.BlockClass;
+import kz.pompei.vipro.model.block.BlockVisitor;
+import kz.pompei.vipro.model.block.BlockExpr;
+import kz.pompei.vipro.model.block.LocationableBlock;
+import kz.pompei.vipro.model.block.BlockMethodDefinition;
 import kz.pompei.vipro.schema.SchemaProducer;
 import kz.pompei.vipro.util.Place;
 
@@ -17,7 +19,7 @@ public class GetPlaceBlockVisitor implements BlockVisitor<Place> {
   @Override
   public Place visitBlockClass(BlockClass bc) {
     Place ret = null;
-    for (MethodDefinition md : bc.methodList) {
+    for (LocationableBlock md : bc.content) {
       Place p = md.visit(this);
       if (ret == null) {
         ret = p;
@@ -30,7 +32,12 @@ public class GetPlaceBlockVisitor implements BlockVisitor<Place> {
   }
   
   @Override
-  public Place visitMethodDefinition(MethodDefinition md) {
+  public Place visitMethodDefinition(BlockMethodDefinition md) {
     return schemaProducer.forMethodDefinition(md, null).getPlace();
+  }
+  
+  @Override
+  public Place visitExprBlock(BlockExpr exprBlock) {
+    throw new RuntimeException();
   }
 }

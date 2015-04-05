@@ -6,9 +6,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 
-import kz.pompei.vipro.model.BlockClass;
-import kz.pompei.vipro.model.BlockVisitor;
-import kz.pompei.vipro.model.MethodDefinition;
+import kz.pompei.vipro.model.block.BlockClass;
+import kz.pompei.vipro.model.block.BlockVisitor;
+import kz.pompei.vipro.model.block.BlockExpr;
+import kz.pompei.vipro.model.block.LocationableBlock;
+import kz.pompei.vipro.model.block.BlockMethodDefinition;
 import kz.pompei.vipro.schema.MethodDefinitionSchema;
 import kz.pompei.vipro.schema.NearSchema;
 import kz.pompei.vipro.schema.SchemaProducer;
@@ -27,14 +29,14 @@ public class DrawBlockVisitor implements BlockVisitor<Void> {
   
   @Override
   public Void visitBlockClass(BlockClass blockClass) {
-    for (MethodDefinition md : blockClass.methodList) {
+    for (LocationableBlock md : blockClass.content) {
       md.visit(this);
     }
     return null;
   }
   
   @Override
-  public Void visitMethodDefinition(MethodDefinition md) {
+  public Void visitMethodDefinition(BlockMethodDefinition md) {
     MethodDefinitionSchema mds = schemaProducer.forMethodDefinition(md, mouse);
     
     g.setColor(Color.YELLOW);
@@ -62,4 +64,8 @@ public class DrawBlockVisitor implements BlockVisitor<Void> {
     g.drawArc(x - r, y - r, 2 * r, 2 * r, 0, 360);
   }
   
+  @Override
+  public Void visitExprBlock(BlockExpr exprBlock) {
+    throw new RuntimeException();
+  }
 }

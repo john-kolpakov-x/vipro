@@ -8,7 +8,7 @@ import java.awt.event.MouseMotionAdapter;
 
 import javax.swing.JPanel;
 
-import kz.pompei.vipro.model.BlockClass;
+import kz.pompei.vipro.model.block.BlockClass;
 import kz.pompei.vipro.model.visitor.block.draw.DrawBlockVisitor;
 import kz.pompei.vipro.schema.SchemaProducerDef;
 
