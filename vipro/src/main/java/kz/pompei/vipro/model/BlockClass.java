@@ -11,5 +11,4 @@ public class BlockClass extends Block {
   public <Ret> Ret visit(BlockVisitor<Ret> visitor) {
     return visitor.visitBlockClass(this);
   }
-  
 }

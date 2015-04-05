@@ -1,4 +1,4 @@
-package kz.pompei.vipro.model;
+package kz.pompei.vipro.util;
 
 public class Size {
   public int width, height;

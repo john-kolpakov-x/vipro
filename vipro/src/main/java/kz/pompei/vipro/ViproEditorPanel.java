@@ -1,6 +1,5 @@
 package kz.pompei.vipro;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -10,11 +9,12 @@ import java.awt.event.MouseMotionAdapter;
 import javax.swing.JPanel;
 
 import kz.pompei.vipro.model.BlockClass;
+import kz.pompei.vipro.model.visitor.block.draw.DrawBlockVisitor;
+import kz.pompei.vipro.schema.SchemaProducerDef;
 
 public class ViproEditorPanel extends JPanel {
   
-  @SuppressWarnings("unused")
-  private final BlockClass source = new BlockClass();
+  public final BlockClass source = new BlockClass();
   
   public ViproEditorPanel() {
     addMouseMotionListener(new MouseMotionAdapter() {
@@ -29,6 +29,7 @@ public class ViproEditorPanel extends JPanel {
   
   private void mouseMovedTo(int x, int y) {
     mouse.setLocation(x, y);
+    repaint();
   }
   
   @Override
@@ -38,8 +39,8 @@ public class ViproEditorPanel extends JPanel {
   }
   
   private void draw(Graphics2D g) {
-    g.setColor(Color.RED);
-    g.drawLine(10, 10, 100, 100);
-    
+    SchemaProducerDef schema = new SchemaProducerDef(g);
+    DrawBlockVisitor v = new DrawBlockVisitor(g, schema, mouse);
+    source.visit(v);
   }
 }

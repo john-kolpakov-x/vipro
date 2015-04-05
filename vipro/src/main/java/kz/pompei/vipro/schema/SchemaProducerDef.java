@@ -15,7 +15,7 @@ public class SchemaProducerDef implements SchemaProducer {
   }
   
   @Override
-  public MethodDefinitionSchema forMethodDefinition(MethodDefinition md) {
+  public MethodDefinitionSchema forMethodDefinition(MethodDefinition md, Point mouse) {
     MethodDefinitionSchema ret = new MethodDefinitionSchema();
     ret.x = ret.y = 0;
     Point loc = md.location;
@@ -39,8 +39,15 @@ public class SchemaProducerDef implements SchemaProducer {
     ret.width = 4 + strWidth + 4;
     ret.height = 4 + ascent + descent + 4;
     
-    ret.nameX = 4;
-    ret.nameY = 4 + ascent;
+    ret.nameX = ret.x + 4;
+    ret.nameY = ret.y + 4 + ascent;
+    
+    {
+      Point near = ret.getPlace().near(mouse, 3);
+      if (near != null) {
+        ret.near = new NearSchema(near, 3);
+      }
+    }
     
     return ret;
   }

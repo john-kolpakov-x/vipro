@@ -1,4 +1,4 @@
-package kz.pompei.vipro.model;
+package kz.pompei.vipro.util;
 
 import java.awt.Point;
 
@@ -68,5 +68,36 @@ public class Place {
   
   private static int max(int a, int b) {
     return a > b ? a : b;
+  }
+  
+  public Point near(Point point, int dist) {
+    if (point == null) return null;
+    
+    int left = getLeft();
+    int right = getRight();
+    int top = getTop();
+    int bottom = getBottom();
+    
+    Point near1 = near(left, top, right, top, point, dist);
+    Point near2 = near(right, top, right, bottom, point, dist);
+    Point near3 = near(left, top, left, bottom, point, dist);
+    Point near4 = near(left, bottom, right, bottom, point, dist);
+    
+    return GeomUtil.nearest(point, near1, near2, near3, near4);
+  }
+  
+  private static Point near(int x1, int y1, int x2, int y2, Point point, double dist) {
+    Vec2 A = new Vec2(x1, y1);
+    Vec2 B = new Vec2(x2, y2);
+    Vec2 P = new Vec2(point);
+    double t = GeomUtil.projKoor(P, A, B);
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    
+    Vec2 K = A.plus(B.minus(A).mul(t));
+    
+    double len = K.minus(P).len();
+    if (len > dist) return null;
+    return K.getPoint();
   }
 }

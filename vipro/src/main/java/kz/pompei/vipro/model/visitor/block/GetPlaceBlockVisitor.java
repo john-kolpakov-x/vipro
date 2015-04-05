@@ -3,9 +3,8 @@ package kz.pompei.vipro.model.visitor.block;
 import kz.pompei.vipro.model.BlockClass;
 import kz.pompei.vipro.model.BlockVisitor;
 import kz.pompei.vipro.model.MethodDefinition;
-import kz.pompei.vipro.model.Place;
-import kz.pompei.vipro.schema.MethodDefinitionSchema;
 import kz.pompei.vipro.schema.SchemaProducer;
+import kz.pompei.vipro.util.Place;
 
 public class GetPlaceBlockVisitor implements BlockVisitor<Place> {
   
@@ -32,7 +31,6 @@ public class GetPlaceBlockVisitor implements BlockVisitor<Place> {
   
   @Override
   public Place visitMethodDefinition(MethodDefinition md) {
-    MethodDefinitionSchema schema = schemaProducer.forMethodDefinition(md);
-    return schema.getPlace();
+    return schemaProducer.forMethodDefinition(md, null).getPlace();
   }
 }

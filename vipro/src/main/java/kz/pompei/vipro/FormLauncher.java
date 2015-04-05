@@ -1,7 +1,11 @@
 package kz.pompei.vipro;
 
+import java.awt.Point;
+
 import javax.swing.JFrame;
 import javax.swing.UIManager;
+
+import kz.pompei.vipro.model.MethodDefinition;
 
 public class FormLauncher {
   public static void main(String[] args) throws Exception {
@@ -20,7 +24,14 @@ public class FormLauncher {
     f.setLocation(1000, 10);
     f.setTitle("Привет всем Щ");
     
-    f.setContentPane(new ViproEditorPanel());
+    ViproEditorPanel p = new ViproEditorPanel();
+    {
+      MethodDefinition md = new MethodDefinition();
+      md.location = new Point(100, 100);
+      md.name = "prepareLocation";
+      p.source.methodList.add(md);
+    }
+    f.setContentPane(p);
     
     f.setVisible(true);
   }
