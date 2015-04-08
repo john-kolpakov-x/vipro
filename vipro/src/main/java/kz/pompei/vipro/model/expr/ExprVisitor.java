@@ -6,7 +6,7 @@ public interface ExprVisitor<Ret> {
   
   Ret visitStrConst(ExprStrConst exprStrConst);
   
-  Ret visitOper1(ExptOper1 exptOper1);
+  Ret visitOper1(ExprOper1 exprOper1);
   
   Ret visitOper2(ExprOper2 exprOper2);
   
