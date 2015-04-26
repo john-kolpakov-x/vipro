@@ -7,10 +7,11 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 
 import kz.pompei.vipro.model.block.BlockClass;
-import kz.pompei.vipro.model.block.BlockVisitor;
 import kz.pompei.vipro.model.block.BlockExpr;
-import kz.pompei.vipro.model.block.LocationableBlock;
 import kz.pompei.vipro.model.block.BlockMethodDefinition;
+import kz.pompei.vipro.model.block.BlockVisitor;
+import kz.pompei.vipro.model.block.LocationableBlock;
+import kz.pompei.vipro.model.expr.visitor.drawer.ExprDrawerCreatorVisitor;
 import kz.pompei.vipro.schema.MethodDefinitionSchema;
 import kz.pompei.vipro.schema.NearSchema;
 import kz.pompei.vipro.schema.SchemaProducer;
@@ -21,10 +22,14 @@ public class DrawBlockVisitor implements BlockVisitor<Void> {
   private final SchemaProducer schemaProducer;
   private final Point mouse;
   
+  private final ExprDrawerCreatorVisitor drawExprVisitor;
+  
   public DrawBlockVisitor(Graphics2D g, SchemaProducer schemaProducer, Point mouse) {
     this.g = g;
     this.schemaProducer = schemaProducer;
     this.mouse = mouse;
+    
+    drawExprVisitor = new ExprDrawerCreatorVisitor(g);
   }
   
   @Override
@@ -66,6 +71,7 @@ public class DrawBlockVisitor implements BlockVisitor<Void> {
   
   @Override
   public Void visitExprBlock(BlockExpr exprBlock) {
-    throw new RuntimeException();
+    exprBlock.expr.visit(drawExprVisitor);
+    return null;
   }
 }

@@ -10,12 +10,12 @@ import kz.pompei.vipro.model.expr.ExprStrConst;
 import kz.pompei.vipro.model.expr.ExprVar;
 import kz.pompei.vipro.model.expr.ExprVisitor;
 
-public class DrawExprVisitor implements ExprVisitor<ExprDrawer> {
+public class ExprDrawerCreatorVisitor implements ExprVisitor<ExprDrawer> {
   
   private int level = 0;
   private final Graphics2D g;
   
-  public DrawExprVisitor(Graphics2D g) {
+  public ExprDrawerCreatorVisitor(Graphics2D g) {
     this.g = g;
   }
   
