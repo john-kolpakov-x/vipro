@@ -2,10 +2,10 @@ package kz.pompei.vipro.model.expr;
 
 public class ExprStrConst extends Expr {
   
-  public final String value;
+  public String value;
   
-  public ExprStrConst(String value) {
-    this.value = value;
+  public ExprStrConst(String id) {
+    super(id);
   }
   
   @Override

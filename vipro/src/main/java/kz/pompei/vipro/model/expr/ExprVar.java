@@ -1,10 +1,10 @@
 package kz.pompei.vipro.model.expr;
 
 public class ExprVar extends Expr {
-  public final String name;
+  public String name;
   
-  public ExprVar(String name) {
-    this.name = name;
+  public ExprVar(String id) {
+    super(id);
   }
   
   @Override

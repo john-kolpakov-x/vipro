@@ -1,15 +1,12 @@
 package kz.pompei.vipro.model.expr;
 
 public class ExprOper2 extends Expr {
-  public final Oper2 oper;
-  public final Expr expr1;
-  public final Expr expr2;
+  public Oper2 oper;
+  public Expr expr1;
+  public Expr expr2;
   
-  public ExprOper2(Oper2 oper, Expr expr1, Expr expr2) {
-    super();
-    this.oper = oper;
-    this.expr1 = expr1;
-    this.expr2 = expr2;
+  public ExprOper2(String id) {
+    super(id);
   }
   
   @Override
