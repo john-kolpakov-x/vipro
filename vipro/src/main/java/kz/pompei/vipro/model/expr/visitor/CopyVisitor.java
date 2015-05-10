@@ -1,7 +1,5 @@
 package kz.pompei.vipro.model.expr.visitor;
 
-import java.util.UUID;
-
 import kz.pompei.vipro.model.expr.Expr;
 import kz.pompei.vipro.model.expr.ExprOper1;
 import kz.pompei.vipro.model.expr.ExprOper2;
@@ -26,7 +24,7 @@ public class CopyVisitor implements ExprVisitor<Expr> {
   }
   
   private String id(String id) {
-    if (newId) return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 10);
+    if (newId) return Expr.rndId();
     return id;
   }
   
