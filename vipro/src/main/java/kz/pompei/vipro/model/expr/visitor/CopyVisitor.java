@@ -17,7 +17,8 @@ public class CopyVisitor implements ExprVisitor<Expr> {
   
   @Override
   public Expr visitVar(ExprVar exprVar) {
-    ExprVar ret = new ExprVar(id(exprVar.id));
+    ExprVar ret = new ExprVar();
+    ret.id = id(exprVar.id);
     ret.cursorIndex = exprVar.cursorIndex;
     ret.name = exprVar.name;
     return ret;
@@ -30,7 +31,8 @@ public class CopyVisitor implements ExprVisitor<Expr> {
   
   @Override
   public Expr visitStrConst(ExprStrConst exprStrConst) {
-    ExprStrConst ret = new ExprStrConst(exprStrConst.id);
+    ExprStrConst ret = new ExprStrConst();
+    ret.id = id(exprStrConst.id);
     ret.value = exprStrConst.value;
     ret.cursorIndex = exprStrConst.cursorIndex;
     return ret;
@@ -38,7 +40,8 @@ public class CopyVisitor implements ExprVisitor<Expr> {
   
   @Override
   public Expr visitOper1(ExprOper1 exprOper1) {
-    ExprOper1 ret = new ExprOper1(exprOper1.id);
+    ExprOper1 ret = new ExprOper1();
+    ret.id = id(exprOper1.id);
     ret.cursorIndex = exprOper1.cursorIndex;
     ret.oper = exprOper1.oper;
     ret.target = exprOper1.target.visit(this);
@@ -47,7 +50,8 @@ public class CopyVisitor implements ExprVisitor<Expr> {
   
   @Override
   public Expr visitOper2(ExprOper2 exprOper2) {
-    ExprOper2 ret = new ExprOper2(exprOper2.id);
+    ExprOper2 ret = new ExprOper2();
+    ret.id = id(exprOper2.id);
     ret.oper = exprOper2.oper;
     ret.cursorIndex = exprOper2.cursorIndex;
     ret.expr1 = exprOper2.expr1.visit(this);

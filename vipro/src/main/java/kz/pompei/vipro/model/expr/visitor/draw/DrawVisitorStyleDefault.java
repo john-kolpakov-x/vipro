@@ -1,6 +1,9 @@
 package kz.pompei.vipro.model.expr.visitor.draw;
 
-public class DrawVisitorContextDefault implements DrawVisitorContext {
+import java.awt.Color;
+import java.awt.Graphics2D;
+
+public class DrawVisitorStyleDefault implements DrawVisitorStyle {
   
   public int offset = 0;
   
@@ -24,5 +27,20 @@ public class DrawVisitorContextDefault implements DrawVisitorContext {
     if (level == -7) return 21;
     
     return 22;
+  }
+  
+  @Override
+  public void applyVarStyle(Graphics2D g) {
+    g.setColor(Color.BLACK);
+  }
+  
+  @Override
+  public void applyHoverBorderStyle(Graphics2D g) {
+    g.setColor(new Color(159, 201, 247));
+  }
+  
+  @Override
+  public void applyHoverStyle(Graphics2D g) {
+    g.setColor(new Color(206, 222, 238));
   }
 }

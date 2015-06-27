@@ -11,12 +11,12 @@ import kz.pompei.vipro.model.expr.ExprVisitor;
 public class DrawVisitor implements ExprVisitor<ExprDrawer> {
   final Graphics2D g;
   int level;
-  DrawVisitorContext levelFont;
+  DrawVisitorStyle style;
   
-  public DrawVisitor(Graphics2D g, int level, DrawVisitorContext levelFont) {
+  public DrawVisitor(Graphics2D g, int level, DrawVisitorStyle style) {
     this.g = g;
     this.level = level;
-    this.levelFont = levelFont;
+    this.style = style;
   }
   
   @Override

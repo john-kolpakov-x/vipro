@@ -1,5 +1,7 @@
 package kz.pompei.vipro.model.expr.visitor.draw;
 
+import java.awt.Point;
+
 import kz.pompei.vipro.model.expr.ExprOper2;
 
 class ExprDrawerOper2 implements ExprDrawer {
@@ -27,7 +29,7 @@ class ExprDrawerOper2 implements ExprDrawer {
   }
   
   @Override
-  public void drawAt(int x, int y) {
+  public void drawAt(int x, int y, Point mouse) {
     // TODO Auto-generated method stub
     
   }

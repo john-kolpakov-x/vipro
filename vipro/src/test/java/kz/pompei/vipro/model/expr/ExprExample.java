@@ -4,7 +4,7 @@ public enum ExprExample {
   ONE {
     @Override
     public Expr create() {
-      ExprVar ret = new ExprVar(null);
+      ExprVar ret = new ExprVar();
       ret.name = "one";
       return ret;
     }
@@ -13,8 +13,8 @@ public enum ExprExample {
   TWO {
     @Override
     public Expr create() {
-      ExprVar ret = new ExprVar(null);
-      ret.name = "two";
+      ExprVar ret = new ExprVar();
+      ret.name = "Variable_Two";
       return ret;
     }
   };

@@ -2,19 +2,23 @@ package kz.pompei.vipro.model.expr;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 import javax.swing.JPanel;
 
 import kz.pompei.vipro.model.expr.visitor.draw.DrawVisitor;
-import kz.pompei.vipro.model.expr.visitor.draw.DrawVisitorContextDefault;
+import kz.pompei.vipro.model.expr.visitor.draw.DrawVisitorStyleDefault;
 import kz.pompei.vipro.model.expr.visitor.draw.ExprDrawer;
 
 public class ExprStandPanel extends JPanel {
   
   private Expr expr;
+  
+  private Point mouse = null;
   
   public void setExpr(Expr expr) {
     this.expr = expr;
@@ -28,6 +32,14 @@ public class ExprStandPanel extends JPanel {
         if (e.getClickCount() == 2) {
           redraw();
         }
+      }
+    });
+    
+    addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        mouse = new Point(e.getX(), e.getY());
+        redraw();
       }
     });
   }
@@ -47,9 +59,9 @@ public class ExprStandPanel extends JPanel {
     
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     
-    DrawVisitorContextDefault dvc = new DrawVisitorContextDefault();
+    DrawVisitorStyleDefault dvc = new DrawVisitorStyleDefault();
     dvc.offset = -3;
     ExprDrawer drawer = expr.visit(new DrawVisitor(g, 0, dvc));
-    drawer.drawAt(10, 10 + drawer.ascent());
+    drawer.drawAt(100, 100 + drawer.ascent(), mouse);
   }
 }
