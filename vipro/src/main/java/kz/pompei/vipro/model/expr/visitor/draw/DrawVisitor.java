@@ -36,6 +36,6 @@ public class DrawVisitor implements ExprVisitor<ExprDrawer> {
   
   @Override
   public ExprDrawer visitOper2(ExprOper2 exprOper2) {
-    return new ExprDrawerOper2(exprOper2, this);
+    return exprOper2.oper.mediator.createDrawer(exprOper2.expr1, exprOper2.expr2, this);
   }
 }

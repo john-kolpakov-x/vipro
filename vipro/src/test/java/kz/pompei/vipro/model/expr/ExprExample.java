@@ -5,16 +5,25 @@ public enum ExprExample {
     @Override
     public Expr create() {
       ExprVar ret = new ExprVar();
-      ret.name = "one";
+      ret.name = "One";
       return ret;
     }
   },
   
-  TWO {
+  ExprVar {
     @Override
     public Expr create() {
       ExprVar ret = new ExprVar();
-      ret.name = "Variable_Two";
+      ret.name = "Variable_A";
+      return ret;
+    }
+  },
+  
+  ExprStrConst {
+    @Override
+    public Expr create() {
+      ExprStrConst ret = new ExprStrConst();
+      ret.value = "Привет всем";
       return ret;
     }
   };

@@ -10,4 +10,6 @@ public interface DrawVisitorStyle {
   void applyHoverBorderStyle(Graphics2D g);
   
   void applyHoverStyle(Graphics2D g);
+  
+  void applyStrConstStyle(Graphics2D g);
 }

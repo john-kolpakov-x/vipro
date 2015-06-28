@@ -43,4 +43,10 @@ public class DrawVisitorStyleDefault implements DrawVisitorStyle {
   public void applyHoverStyle(Graphics2D g) {
     g.setColor(new Color(206, 222, 238));
   }
+  
+  @Override
+  public void applyStrConstStyle(Graphics2D g) {
+    g.setColor(new Color(234, 75, 36));
+  }
+  
 }
