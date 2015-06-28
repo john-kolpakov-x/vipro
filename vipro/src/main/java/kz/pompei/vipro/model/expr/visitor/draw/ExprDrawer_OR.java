@@ -1,14 +1,12 @@
-package kz.pompei.vipro.model.expr.visitor.draw.oper2;
+package kz.pompei.vipro.model.expr.visitor.draw;
 
 import java.awt.Point;
 
 import kz.pompei.vipro.model.expr.Expr;
-import kz.pompei.vipro.model.expr.visitor.draw.DrawVisitor;
-import kz.pompei.vipro.model.expr.visitor.draw.ExprDrawer;
 
-public class ExprDrawer_AND implements ExprDrawer {
+public class ExprDrawer_OR implements ExprDrawer {
   
-  public ExprDrawer_AND(Expr expr1, Expr expr2, DrawVisitor drawVisitor) {
+  public ExprDrawer_OR(Expr expr1, Expr expr2, DrawVisitor drawVisitor) {
     // TODO Auto-generated constructor stub
   }
   

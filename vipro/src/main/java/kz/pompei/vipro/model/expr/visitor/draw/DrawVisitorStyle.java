@@ -12,4 +12,6 @@ public interface DrawVisitorStyle {
   void applyHoverStyle(Graphics2D g);
   
   void applyStrConstStyle(Graphics2D g);
+  
+  void applyOperStyle(Graphics2D g);
 }

@@ -1,10 +1,8 @@
-package kz.pompei.vipro.model.expr.visitor.draw.oper2;
+package kz.pompei.vipro.model.expr.visitor.draw;
 
 import java.awt.Point;
 
 import kz.pompei.vipro.model.expr.Expr;
-import kz.pompei.vipro.model.expr.visitor.draw.DrawVisitor;
-import kz.pompei.vipro.model.expr.visitor.draw.ExprDrawer;
 
 public class ExprDrawer_MUL implements ExprDrawer {
   

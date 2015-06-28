@@ -1,7 +1,6 @@
-package kz.pompei.vipro.model.expr.visitor.draw.oper2;
+package kz.pompei.vipro.model.expr.visitor.draw;
 
 import kz.pompei.vipro.model.expr.Expr;
-import kz.pompei.vipro.model.expr.visitor.draw.DrawVisitor;
 
 public class ExprDrawer_PLUS extends ExprDrawerStrHorizontal {
   

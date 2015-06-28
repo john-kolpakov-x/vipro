@@ -49,4 +49,8 @@ public class DrawVisitorStyleDefault implements DrawVisitorStyle {
     g.setColor(new Color(234, 75, 36));
   }
   
+  @Override
+  public void applyOperStyle(Graphics2D g) {
+    g.setColor(new Color(59, 89, 153));
+  }
 }
