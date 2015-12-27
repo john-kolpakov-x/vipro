@@ -8,11 +8,19 @@ eclipse.project {
   natures 'org.springsource.ide.eclipse.gradle.core.nature'
 }
 
+group = "kz.greetgo.vipro"
+version = "0.0.1"
+
+sourceSets.main.java.srcDirs = ['src', 'src_resources']
+sourceSets.test.java.srcDirs = ['test_src', 'test_src_resources']
+sourceSets.main.resources.srcDirs = ['src', 'src_resources']
+sourceSets.test.resources.srcDirs = ['test_src', 'test_src_resources']
+
 repositories {
   mavenCentral()
 }
 
-sourceCompatibility = '1.7'
+sourceCompatibility = '1.8'
 
 dependencies {
   testCompile 'org.testng:testng:6.1.1'
