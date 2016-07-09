@@ -16,7 +16,7 @@ public class TestDisplayUtil {
       BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
       port.setGraphics(image.createGraphics());
       displayExpr.size();
-      port.graphics().dispose();
+      port.graphics().close();
     }
 
     {
@@ -27,7 +27,7 @@ public class TestDisplayUtil {
 
       displayExpr.displayTo(10, 10 + size.top);
 
-      port.graphics().dispose();
+      port.graphics().close();
 
       new File("build").mkdirs();
 

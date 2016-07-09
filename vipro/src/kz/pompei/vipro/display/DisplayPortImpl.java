@@ -1,26 +1,29 @@
 package kz.pompei.vipro.display;
 
+import kz.pompei.vipro.painter.Painter;
+import kz.pompei.vipro.painter.PainterGraphics;
+
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 public class DisplayPortImpl implements DisplayPort {
-  private Graphics2D graphics;
+  private Painter graphics;
   public int levelOffset;
 
   @Override
-  public Graphics2D graphics() {
+  public Painter graphics() {
     return graphics;
   }
 
   public void setGraphics(Graphics2D graphics) {
     prepareHints(graphics);
-    this.graphics = graphics;
+    this.graphics = new PainterGraphics(graphics);
   }
 
   protected void prepareHints(Graphics2D graphics) {
     RenderingHints rh = new RenderingHints(
-        RenderingHints.KEY_TEXT_ANTIALIASING,
-        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      RenderingHints.KEY_TEXT_ANTIALIASING,
+      RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
     graphics.setRenderingHints(rh);
   }

@@ -3,6 +3,7 @@ package kz.pompei.vipro.display.impl;
 import kz.pompei.vipro.display.DisplayExpr;
 import kz.pompei.vipro.display.DisplayPort;
 import kz.pompei.vipro.display.Size;
+import kz.pompei.vipro.painter.Painter;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -57,13 +58,13 @@ public class DisplayDiv implements DisplayExpr {
 
   private void displayLine(int x, int y) {
     if (lineColor == null) return;
-    Graphics2D g = (Graphics2D) port.graphics().create();
+    try (Painter g =  port.graphics().create()) {
 
-    g.setColor(lineColor);
-    g.setStroke(new BasicStroke(lineWidth));
-    g.drawLine(x + lineDeltaX, y - lineDeltaY, x + lineDeltaX + lineLength, y - lineDeltaY);
+      g.setColor(lineColor);
+      g.setStroke(new BasicStroke(lineWidth));
+      g.drawLine(x + lineDeltaX, y - lineDeltaY, x + lineDeltaX + lineLength, y - lineDeltaY);
 
-    g.dispose();
+    }
   }
 
 
@@ -74,11 +75,12 @@ public class DisplayDiv implements DisplayExpr {
     Size topSize = top.size();
     Size bottomSize = bottom.size();
 
-    Graphics2D g = (Graphics2D) port.graphics().create();
-    g.setFont(g.getFont().deriveFont(port.getFontSize(level)));
-    float ascent = g.getFontMetrics().getAscent();
-    float descent = g.getFontMetrics().getDescent();
-    g.dispose();
+    final float ascent, descent;
+    try (Painter g = port.graphics().create()) {
+      g.setFont(g.getFont().deriveFont(port.getFontSize(level)));
+      ascent = g.getFontMetrics().getAscent();
+      descent = g.getFontMetrics().getDescent();
+    }
 
     float space = ascent * spaceFactor;
 

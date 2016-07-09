@@ -41,7 +41,7 @@ public class DisplayTextTest {
       BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
       port.setGraphics(image.createGraphics());
       expr.size();
-      port.graphics().dispose();
+      port.graphics().close();
     }
 
     displayToFile(expr, port, getClass().getSimpleName() + '_' + text

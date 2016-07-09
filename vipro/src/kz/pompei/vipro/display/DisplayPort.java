@@ -1,9 +1,9 @@
 package kz.pompei.vipro.display;
 
-import java.awt.Graphics2D;
+import kz.pompei.vipro.painter.Painter;
 
 public interface DisplayPort {
-  Graphics2D graphics();
+  Painter graphics();
 
   float getFontSize(int level);
 }

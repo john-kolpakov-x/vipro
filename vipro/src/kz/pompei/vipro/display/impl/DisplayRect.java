@@ -3,9 +3,9 @@ package kz.pompei.vipro.display.impl;
 import kz.pompei.vipro.display.DisplayExpr;
 import kz.pompei.vipro.display.DisplayPort;
 import kz.pompei.vipro.display.Size;
+import kz.pompei.vipro.painter.Painter;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 
 public class DisplayRect implements DisplayExpr {
 
@@ -31,20 +31,20 @@ public class DisplayRect implements DisplayExpr {
 
   @Override
   public void displayTo(int x, int y) {
-    Graphics2D g = (Graphics2D) port.graphics().create();
+    try (Painter g = port.graphics().create()) {
 
-    if (background != null) {
-      g.setColor(background);
-      g.fillRect(x, y - size.top, size.width, size.height());
+      if (background != null) {
+        g.setColor(background);
+        g.fillRect(x, y - size.top, size.width, size.height());
+      }
+
+      if (border != null) {
+        g.setColor(border);
+        g.drawRect(x, y - size.top, size.width, size.height());
+        g.drawLine(x, y, x + size.width, y);
+      }
+
     }
-
-    if (border != null) {
-      g.setColor(border);
-      g.drawRect(x, y - size.top, size.width, size.height());
-      g.drawLine(x, y, x + size.width, y);
-    }
-
-    g.dispose();
   }
 
   @Override

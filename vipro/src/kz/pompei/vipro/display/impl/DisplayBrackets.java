@@ -4,10 +4,10 @@ import kz.pompei.vipro.display.BracketsType;
 import kz.pompei.vipro.display.DisplayExpr;
 import kz.pompei.vipro.display.DisplayPort;
 import kz.pompei.vipro.display.Size;
+import kz.pompei.vipro.painter.Painter;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
@@ -89,48 +89,48 @@ public class DisplayBrackets implements DisplayExpr {
   private void drawBracket_ROUND(int x, int y, int width, int height) {
     if (width == 0) return;
 
-    Graphics2D g = (Graphics2D) port.graphics().create();
-    if (width > 0) {
-      g.clipRect(x, y, width + 1, height + 1);
-    } else {
-      g.clipRect(x + width, y, -width + 1, height + 1);
+    try (Painter g = port.graphics().create()) {
+      if (width > 0) {
+        g.clipRect(x, y, width + 1, height + 1);
+      } else {
+        g.clipRect(x + width, y, -width + 1, height + 1);
+      }
+
+      g.setColor(color);
+      g.setStroke(new BasicStroke(lineWidth));
+
+      Rectangle2D.Float rect = new Rectangle2D.Float();
+      if (width > 0) {
+        rect.setFrame(x, y, width * 2, height);
+      } else {
+        rect.setFrame(x + width * 2, y, -width * 2, height);
+      }
+
+      Ellipse2D.Float ellipse = new Ellipse2D.Float();
+      ellipse.setFrame(rect);
+      g.draw(ellipse);
+
     }
-
-    g.setColor(color);
-    g.setStroke(new BasicStroke(lineWidth));
-
-    Rectangle2D.Float rect = new Rectangle2D.Float();
-    if (width > 0) {
-      rect.setFrame(x, y, width * 2, height);
-    } else {
-      rect.setFrame(x + width * 2, y, -width * 2, height);
-    }
-
-    Ellipse2D.Float ellipse = new Ellipse2D.Float();
-    ellipse.setFrame(rect);
-    g.draw(ellipse);
-
-    g.dispose();
   }
 
   private void drawBracket_SQUARE(int x, int y, int width, int height) {
     if (width == 0) return;
 
-    Graphics2D g = (Graphics2D) port.graphics().create();
+    try (Painter g = port.graphics().create()) {
 
-    if (width > 0) {
-      g.clipRect(x, y, width + 1, height + 1);
-    } else {
-      g.clipRect(x + width, y, -width + 1, height + 1);
+      if (width > 0) {
+        g.clipRect(x, y, width + 1, height + 1);
+      } else {
+        g.clipRect(x + width, y, -width + 1, height + 1);
+      }
+
+      g.setColor(color);
+      g.setStroke(new BasicStroke(lineWidth * 2f));
+
+      g.drawLine(x, y, x + width, y);
+      g.drawLine(x, y, x, y + height);
+      g.drawLine(x, y + height, x + width, y + height);
+
     }
-
-    g.setColor(color);
-    g.setStroke(new BasicStroke(lineWidth * 2f));
-
-    g.drawLine(x, y, x + width, y);
-    g.drawLine(x, y, x, y + height);
-    g.drawLine(x, y + height, x + width, y + height);
-
-    g.dispose();
   }
 }

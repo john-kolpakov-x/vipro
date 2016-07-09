@@ -3,11 +3,11 @@ package kz.pompei.vipro.display.impl;
 import kz.pompei.vipro.display.DisplayExpr;
 import kz.pompei.vipro.display.DisplayPort;
 import kz.pompei.vipro.display.Size;
+import kz.pompei.vipro.painter.Painter;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics2D;
 
 public class DisplayText implements DisplayExpr {
   public final int level;
@@ -35,21 +35,21 @@ public class DisplayText implements DisplayExpr {
     size = null;
   }
 
-  private void prepare(Graphics2D g) {
+  private void prepare(Painter g) {
     g.setColor(color);
     g.setFont(g.getFont()
-        .deriveFont(port.getFontSize(level))
-        .deriveFont((bold ? Font.BOLD : 0) | (italic ? Font.ITALIC : 0))
+      .deriveFont(port.getFontSize(level))
+      .deriveFont((bold ? Font.BOLD : 0) | (italic ? Font.ITALIC : 0))
     );
   }
-  
+
   @Override
   public void displayTo(int x, int y) {
     size();
-    Graphics2D g = (Graphics2D) port.graphics().create();
-    prepare(g);
-    g.drawString(text, x, y);
-    g.dispose();
+    try (Painter g = port.graphics().create()) {
+      prepare(g);
+      g.drawString(text, x, y);
+    }
   }
 
   private Size size = null;
@@ -58,16 +58,15 @@ public class DisplayText implements DisplayExpr {
   public Size size() {
     if (size != null) return size;
 
-    Graphics2D g = (Graphics2D) port.graphics().create();
-    prepare(g);
+    try (Painter g = port.graphics().create()) {
+      prepare(g);
 
-    FontMetrics fm = g.getFontMetrics();
-    int top = fm.getAscent();
-    int bottom = fm.getDescent();
-    int width = fm.stringWidth(text);
-    
-    g.dispose();
-    
-    return size = new Size(top,bottom,width);
+      FontMetrics fm = g.getFontMetrics();
+      int top = fm.getAscent();
+      int bottom = fm.getDescent();
+      int width = fm.stringWidth(text);
+
+      return size = new Size(top, bottom, width);
+    }
   }
 }
