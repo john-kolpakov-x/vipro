@@ -7,6 +7,5 @@ public class Method extends Block {
   public int x, y;
   public String resultType;
   public final List<MethodArg> argList = new ArrayList<>();
-
   public BlockPoint down;
 }
