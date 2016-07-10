@@ -6,6 +6,23 @@ import kz.pompei.vipro.display.Size;
 
 import java.util.Collection;
 
+/**
+ * <p>
+ * Оттображение leaned прилепленное сбоку (слева или права) к base
+ * </p>
+ * <pre>
+ *    right = false            right = true
+ *    ┌────────┐              ┌────────┐
+ *    │ leaned │ ┏━━━━━━━━━━┓ │ leaned │  0 < upFactor < 1
+ *    └────────┘ ┃          ┃ └────────┘
+ *               ┃   BASE   ┃
+ *               ┃          ┃
+ * ┈┈┈┈┈┈┈┈┈┈┈┈┈ ┠──────────┨┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ Результирующая базова линия
+ *    ┌────────┐ ┃          ┃ ┌────────┐
+ *    │ leaned │ ┗━━━━━━━━━━┛ │ leaned │  -1 < upFactor < 0
+ *    └────────┘              └────────┘
+ * </pre>
+ */
 public class DisplayLeaning implements DisplayExpr {
   public final DisplayExpr base;
   public final DisplayExpr leaned;
@@ -13,6 +30,31 @@ public class DisplayLeaning implements DisplayExpr {
   public final double upFactor;
   public final double spaceFactor;
 
+  /**
+   * <pre>
+   *       right = false            right = true
+   *       ┌────────┐              ┌────────┐
+   *       │ leaned │ ┏━━━━━━━━━━┓ │ leaned │  0 < upFactor < 1
+   *       └────────┘ ┃          ┃ └────────┘
+   *                  ┃   BASE   ┃
+   *                  ┃          ┃
+   * ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┠──────────┨┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ Результирующая базова линия
+   *       ┌────────┐ ┃          ┃ ┌────────┐
+   *       │ leaned │ ┗━━━━━━━━━━┛ │ leaned │  -1 < upFactor < 0
+   *       └────────┘              └────────┘
+   * </pre>
+   *
+   * @param base        базовый элемент
+   * @param leaned      прилепленный элемент
+   * @param right       оттображать leaned справа (true) или слева (false)
+   * @param upFactor    фактор подъёма leaned относительно BASE: <br>
+   *                    upFactor = 0  - базовые линии совпадают (подъёма нет);<br>
+   *                    upFactor > 0  - leaned оттображается выше; <br>
+   *                    upFactor < 0  - leaned оттображается ниже<br>
+   *                    upFactor = 1  - нижний край leaned на одном уровне с верхним краем BASE<br>
+   *                    upFactor = -1 - верхний край leaned на одном уровне с нижним краем BASE<br>
+   * @param spaceFactor фактор расстояния между BASE и leaned: расстояние = spaceFactor * height(BASE)
+   */
   public DisplayLeaning(DisplayExpr base, DisplayExpr leaned, boolean right, double upFactor, double spaceFactor) {
     this.base = base;
     this.leaned = leaned;
