@@ -10,7 +10,7 @@ import java.awt.Color;
 
 import static kz.pompei.vipro.display.impl.TestDisplayUtil.displayToFile;
 
-public class DisplayLeaningTest {
+public class DisplayLeaningVerticalTest {
 
   enum Side {
     LEFT, RIGHT
@@ -47,7 +47,7 @@ public class DisplayLeaningTest {
       new Color(142, 161, 41)
     );
 
-    DisplayLeaning expr = new DisplayLeaning(base, leaning, side == Side.RIGHT, upFactor, spaceFactor);
+    DisplayLeaningVertical expr = new DisplayLeaningVertical(base, leaning, side == Side.RIGHT, upFactor, spaceFactor);
 
     DisplayPortImpl port = new DisplayPortImpl();
     port.levelOffset = 0;

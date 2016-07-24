@@ -21,16 +21,20 @@ public class TestDisplayUtil {
       port.graphics().close();
     }
 
+    final int d = 10;
+
     {
       Size size = displayExpr.size();
-      BufferedImage image = new BufferedImage(size.width + 20, size.height() + 20, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage image = new BufferedImage(size.width + 2 * d, size.height() + 2 * d, BufferedImage.TYPE_INT_ARGB);
 
       Graphics2D g = image.createGraphics();
       g.setColor(Color.white);
       g.fillRect(0, 0, image.getWidth(), image.getHeight());
+      g.setColor(Color.gray);
+      g.drawLine(0, size.top + d, size.width + 2 * d, size.top + d);
       port.setGraphics(g);
 
-      displayExpr.displayTo(10, 10 + size.top);
+      displayExpr.displayTo(d, d + size.top);
 
       port.graphics().close();
 

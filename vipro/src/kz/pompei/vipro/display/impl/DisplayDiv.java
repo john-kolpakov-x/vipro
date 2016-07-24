@@ -7,7 +7,6 @@ import kz.pompei.vipro.painter.Painter;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics2D;
 
 import static java.lang.Math.round;
 

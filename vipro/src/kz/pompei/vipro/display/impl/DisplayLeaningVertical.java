@@ -23,7 +23,7 @@ import java.util.Collection;
  *    └────────┘              └────────┘
  * </pre>
  */
-public class DisplayLeaning implements DisplayExpr {
+public class DisplayLeaningVertical implements DisplayExpr {
   public final DisplayExpr base;
   public final DisplayExpr leaned;
   public final boolean right;
@@ -55,7 +55,7 @@ public class DisplayLeaning implements DisplayExpr {
    *                    upFactor = -1 - верхний край leaned на одном уровне с нижним краем BASE<br>
    * @param spaceFactor фактор расстояния между BASE и leaned: расстояние = spaceFactor * height(BASE)
    */
-  public DisplayLeaning(DisplayExpr base, DisplayExpr leaned, boolean right, double upFactor, double spaceFactor) {
+  public DisplayLeaningVertical(DisplayExpr base, DisplayExpr leaned, boolean right, double upFactor, double spaceFactor) {
     this.base = base;
     this.leaned = leaned;
     this.right = right;
@@ -74,8 +74,8 @@ public class DisplayLeaning implements DisplayExpr {
     }
 
     if (len == 1) return order[offset];
-    if (len == 2) return new DisplayLeaning(order[offset], order[offset + 1], true, 0, 0);
-    return new DisplayLeaning(order[offset], displayOrder(order, offset + 1, len - 1), true, 0, 0);
+    if (len == 2) return new DisplayLeaningVertical(order[offset], order[offset + 1], true, 0, 0);
+    return new DisplayLeaningVertical(order[offset], displayOrder(order, offset + 1, len - 1), true, 0, 0);
   }
 
   public static DisplayExpr displayOrder(Collection<DisplayExpr> collection) {
