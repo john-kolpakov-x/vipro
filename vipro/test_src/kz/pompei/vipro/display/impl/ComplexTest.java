@@ -20,7 +20,6 @@ public class ComplexTest {
     expr.setPort(port);
 
     displayToFile(expr, port, getClass().getSimpleName());
-
   }
 
   private DisplayExpr getDisplayExpr() {
