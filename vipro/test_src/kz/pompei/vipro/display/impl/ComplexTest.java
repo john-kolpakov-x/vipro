@@ -34,11 +34,11 @@ public class ComplexTest {
 
     DisplayBrackets b_a = new DisplayBrackets(a, BracketsType.ROUND, color);
 
-    DisplayExpr top = DisplayLeaningVertical.displayOrder(sin, b_a);
-    DisplayExpr bot = DisplayLeaningVertical.displayOrder(cos, b_a);
+    DisplayExpr top = DisplayOrder.displayOrder(sin, b_a);
+    DisplayExpr bot = DisplayOrder.displayOrder(cos, b_a);
 
     DisplayDiv div = new DisplayDiv(0, top, bot, 0.04f, color);
 
-    return DisplayLeaningVertical.displayOrder(tg, b_a, eq, div);
+    return DisplayOrder.displayOrder(tg, b_a, eq, div);
   }
 }
