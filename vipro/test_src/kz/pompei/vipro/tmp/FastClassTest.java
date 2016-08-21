@@ -68,6 +68,7 @@ public class FastClassTest {
     for (long i = 1; i <= LOOPS_COUNT; i++) {
       fastAdd.invoke(a3, new Object[]{i});
     }
+
     long time6 = System.nanoTime();
 
     System.out.println("a3 /fast cglib/ = " + a3);

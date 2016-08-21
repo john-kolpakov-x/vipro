@@ -1,7 +1,16 @@
 package kz.pompei.vipro.tmp;
 
+import org.testng.annotations.Test;
+
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.IntUnaryOperator;
+
+import static org.fest.assertions.Assertions.assertThat;
 
 public class CounterTest {
 
@@ -150,4 +159,21 @@ public class CounterTest {
     }
   }
 
+  @Test
+  public void finalTest() throws Exception {
+    int minusOne = -1;
+    int zero = 0;
+    int one = 1;
+    Comparator<Integer> cmp = (x, y) -> (x < y) ? minusOne : ((x > y) ? one : zero);
+    assertThat(cmp.compare(0, 0)).isZero();
+    IntUnaryOperator fib[] = new IntUnaryOperator[1];
+    fib[0] = n -> (n < 2) ? n : fib[0].applyAsInt(n - 1) + fib[0].applyAsInt(n - 2);
+  }
+
+  @Test
+  public void printWow() throws Exception {
+    PrintStream printStream = System.out;
+    Consumer<String> printerToSTDOUT = printStream::println;
+    Arrays.asList("asd", "dsa").forEach(printerToSTDOUT);
+  }
 }
