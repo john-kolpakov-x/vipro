@@ -1,0 +1,5 @@
+
+dependencies {
+  compile 'org.easytesting:fest-assert:1.4'
+  compile group: 'cglib', name: 'cglib', version: '3.2.4'
+}

@@ -1,37 +1,49 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'eclipse'
-apply plugin: 'idea'
 
-compileJava {
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
-}
+allprojects {
+  apply plugin: 'java'
+  apply plugin: 'maven'
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
 
-eclipse.project {
-  natures 'org.springsource.ide.eclipse.gradle.core.nature'
-}
-
-sourceSets {
-  main {
-    java.srcDirs = ["src"]
-    resources.srcDirs = ["src", "src_resources"]
-    output.resourcesDir = "build/classes/main"
+  compileJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
   }
-  test {
-    java.srcDirs = ["test_src"]
-    resources.srcDirs = ["test_src", "test_resources"]
-    output.resourcesDir = "build/classes/test"
-  }
-}
 
-repositories {
-  mavenCentral()
+  eclipse.project {
+    natures 'org.springsource.ide.eclipse.gradle.core.nature'
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs = ["src"]
+      resources.srcDirs = ["src", "src_resources"]
+      output.resourcesDir = "build/classes/main"
+    }
+    test {
+      java.srcDirs = ["test_src"]
+      resources.srcDirs = ["test_src", "test_resources"]
+      output.resourcesDir = "build/classes/test"
+    }
+  }
+
+  compileJava {
+    options.encoding = "UTF-8"
+  }
+  compileTestJava {
+    options.encoding = "UTF-8"
+  }
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    testCompile 'org.testng:testng:6.5.1'
+  }
 }
 
 dependencies {
   compile 'org.easytesting:fest-assert:1.4'
   compile group: 'cglib', name: 'cglib', version: '3.2.4'
-
-  testCompile 'org.testng:testng:6.5.1'
 }
