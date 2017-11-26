@@ -4,9 +4,8 @@ bin
 .settings
 target
 build
-.gradle
+.gradle/
 *.iml
 *.ipr
 *.iws
-.idea
 .idea/
