@@ -5,8 +5,7 @@ import kz.pompei.vipro.display.DisplayPort;
 import kz.pompei.vipro.display.Size;
 import kz.pompei.vipro.painter.Painter;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
+import java.awt.*;
 
 import static java.lang.Math.round;
 
@@ -57,7 +56,7 @@ public class DisplayDiv implements DisplayExpr {
 
   private void displayLine(int x, int y) {
     if (lineColor == null) return;
-    try (Painter g =  port.graphics().create()) {
+    try (Painter g = port.graphics().create()) {
 
       g.setColor(lineColor);
       g.setStroke(new BasicStroke(lineWidth));
@@ -85,20 +84,23 @@ public class DisplayDiv implements DisplayExpr {
 
     float width2 = Math.max(topSize.width, bottomSize.width) / 2f;
 
+    float lineY = ascent / 3f;
+
     lineWidth = space / 2;
     lineDeltaX = round(space);
-    lineDeltaY = round(ascent / 2);
+    lineDeltaY = round(lineY);
     lineLength = round(2 * width2 + 2 * space);
 
     topDeltaX = round(space * 2 + width2 - topSize.width / 2f);
     bottomDeltaX = round(space * 2 + width2 - bottomSize.width / 2f);
 
-    topDeltaY = round(ascent / 2 + space + topSize.bottom);
-    bottomDeltaY = round(ascent / 2 - space - bottomSize.top);
+
+    topDeltaY = round(lineY + space + topSize.bottom);
+    bottomDeltaY = round(lineY - space - bottomSize.top);
 
     float width = 4 * space + 2 * width2;
-    float top = space + topSize.height() + ascent / 2;
-    float bottom = space + bottomSize.height() - ascent / 2;
+    float top = space + topSize.height() + lineY;
+    float bottom = space + bottomSize.height() - lineY;
 
     if (top < ascent) top = ascent;
     if (bottom < descent) bottom = descent;

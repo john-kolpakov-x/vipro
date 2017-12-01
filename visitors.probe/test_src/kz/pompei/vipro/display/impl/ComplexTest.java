@@ -25,7 +25,7 @@ public class ComplexTest {
   private DisplayExpr getDisplayExpr() {
     Color color = new Color(0, 0, 0);
 
-    DisplayText a = new DisplayText(0, "α", color, false, false);
+    DisplayText a = new DisplayText(0, "ℤ\uD835\uDD44", color, false, false);
     DisplayText eq = new DisplayText(0, "=", color, false, false);
 
     DisplayText sin = new DisplayText(0, "sin", color, false, false);
@@ -37,7 +37,7 @@ public class ComplexTest {
     DisplayExpr top = DisplayOrder.displayOrder(sin, b_a);
     DisplayExpr bot = DisplayOrder.displayOrder(cos, b_a);
 
-    DisplayDiv div = new DisplayDiv(0, top, bot, 0.04f, color);
+    DisplayDiv div = new DisplayDiv(0, top, bot, 0.08f, color);
 
     return DisplayOrder.displayOrder(tg, b_a, eq, div);
   }
