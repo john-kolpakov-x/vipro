@@ -1,2 +1,3 @@
 rootProject.name = 'vipro'
 include 'visitors.probe'
+include 'probe3d'
