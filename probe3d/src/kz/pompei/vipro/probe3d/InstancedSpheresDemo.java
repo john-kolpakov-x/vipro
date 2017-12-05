@@ -1,7 +1,3 @@
-/*
- * Copyright LWJGL. All rights reserved.
- * License terms: http://lwjgl.org/license.php
- */
 package kz.pompei.vipro.probe3d;
 
 import org.joml.Matrix4f;
@@ -151,6 +147,15 @@ public class InstancedSpheresDemo {
     VkDevice device;
     int queueFamilyIndex;
     VkPhysicalDeviceMemoryProperties memoryProperties;
+
+    @Override
+    public String toString() {
+      return "DeviceAndGraphicsQueueFamily{" +
+          "device=" + device +
+          ", queueFamilyIndex=" + queueFamilyIndex +
+          ", memoryProperties=" + memoryProperties +
+          '}';
+    }
   }
 
   private static DeviceAndGraphicsQueueFamily createDeviceAndGetGraphicsQueueFamily(VkPhysicalDevice physicalDevice) {
@@ -213,6 +218,7 @@ public class InstancedSpheresDemo {
     return ret;
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   private static boolean getSupportedDepthFormat(VkPhysicalDevice physicalDevice, IntBuffer depthFormat) {
     // Since all depth formats may be optional, we need to find a suitable depth format to use
     // Start with the highest precision packed format
@@ -375,6 +381,7 @@ public class InstancedSpheresDemo {
     return new VkCommandBuffer(commandBuffer, device);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static void imageBarrier(VkCommandBuffer cmdbuffer, long image, int aspectMask, int oldImageLayout, int srcAccess, int newImageLayout, int dstAccess) {
     // Create an image barrier object
     VkImageMemoryBarrier.Buffer imageMemoryBarrier = VkImageMemoryBarrier.calloc(1)
@@ -411,6 +418,7 @@ public class InstancedSpheresDemo {
     long[] imageViews;
   }
 
+  @SuppressWarnings("ConstantConditions")
   private static Swapchain createSwapChain(VkDevice device, VkPhysicalDevice physicalDevice, long surface, long oldSwapChain, VkCommandBuffer commandBuffer, int newWidth,
                                            int newHeight, int colorFormat, int colorSpace) {
     int err;
@@ -786,6 +794,7 @@ public class InstancedSpheresDemo {
     return shaderStage;
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   private static boolean getMemoryType(VkPhysicalDeviceMemoryProperties deviceMemoryProperties, int typeBits, int properties, IntBuffer typeIndex) {
     int bits = typeBits;
     for (int i = 0; i < 32; i++) {
@@ -1455,6 +1464,7 @@ public class InstancedSpheresDemo {
     final long debugCallbackHandle = setupDebugging(instance, VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT, debugCallback);
     final VkPhysicalDevice physicalDevice = getFirstPhysicalDevice(instance);
     final DeviceAndGraphicsQueueFamily deviceAndGraphicsQueueFamily = createDeviceAndGetGraphicsQueueFamily(physicalDevice);
+    System.out.println("deviceAndGraphicsQueueFamily = " + deviceAndGraphicsQueueFamily);
     final VkDevice device = deviceAndGraphicsQueueFamily.device;
     int queueFamilyIndex = deviceAndGraphicsQueueFamily.queueFamilyIndex;
     final VkPhysicalDeviceMemoryProperties memoryProperties = deviceAndGraphicsQueueFamily.memoryProperties;
@@ -1522,6 +1532,7 @@ public class InstancedSpheresDemo {
         vkQueueWaitIdle(queue);
 
         if (framebuffers != null) {
+          //noinspection ForLoopReplaceableByForEach
           for (int i = 0; i < framebuffers.length; i++)
             vkDestroyFramebuffer(device, framebuffers[i], null);
         }
@@ -1541,8 +1552,7 @@ public class InstancedSpheresDemo {
     // Handle canvas resize
     GLFWFramebufferSizeCallback framebufferSizeCallback = new GLFWFramebufferSizeCallback() {
       public void invoke(long window, int width, int height) {
-        if (width <= 0 || height <= 0)
-          return;
+        if (width <= 0 || height <= 0) return;
         swapchainRecreator.mustRecreate = true;
         InstancedSpheresDemo.width = width;
         InstancedSpheresDemo.height = height;
@@ -1554,7 +1564,6 @@ public class InstancedSpheresDemo {
     // Pre-allocate everything needed in the render loop
 
     IntBuffer pImageIndex = memAllocInt(1);
-    int currentBuffer = 0;
     PointerBuffer pCommandBuffers = memAllocPointer(1);
     LongBuffer pSwapchains = memAllocLong(1);
     LongBuffer pImageAcquiredSemaphore = memAllocLong(1);
@@ -1613,7 +1622,7 @@ public class InstancedSpheresDemo {
       // Get next image from the swap chain (back/front buffer).
       // This will setup the imageAquiredSemaphore to be signalled when the operation is complete
       err = vkAcquireNextImageKHR(device, swapchain.swapchainHandle, UINT64_MAX, pImageAcquiredSemaphore.get(0), VK_NULL_HANDLE, pImageIndex);
-      currentBuffer = pImageIndex.get(0);
+      int currentBuffer = pImageIndex.get(0);
       if (err != VK_SUCCESS) {
         throw new AssertionError("Failed to acquire next swapchain image: " + translateVulkanResult(err));
       }
@@ -1625,7 +1634,7 @@ public class InstancedSpheresDemo {
       long thisTime = System.nanoTime();
       time += (thisTime - lastTime) / 1E9f;
       lastTime = thisTime;
-      updateUbo(device, uboDescriptor, time);
+      updateUbo(device, uboDescriptor, time/4);
 
       // Submit to the graphics queue
       err = vkQueueSubmit(queue, submitInfo, VK_NULL_HANDLE);

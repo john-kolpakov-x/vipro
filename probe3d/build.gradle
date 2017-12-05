@@ -16,42 +16,7 @@ dependencies {
   compile "org.lwjgl:lwjgl-assimp:$lwjglVersion"
   compile "org.lwjgl:lwjgl-assimp:$lwjglVersion:natives-linux"
 
-  /*
-  <dependency>
-  <groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl</artifactId>
-  <version>${lwjgl.version}</version>
-			<classifier>natives-${platform}</classifier>
-  </dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-  <artifactId>lwjgl-opengl</artifactId>
-			<version>${lwjgl.version}</version>
-  <classifier>natives-${platform}</classifier>
-		</dependency>
-  <dependency>
-  <groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-glfw</artifactId>
-  <version>${lwjgl.version}</version>
-			<classifier>natives-${platform}</classifier>
-  </dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-  <artifactId>lwjgl-stb</artifactId>
-			<version>${lwjgl.version}</version>
-  <classifier>natives-${platform}</classifier>
-		</dependency>
-  <dependency>
-  <groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-bgfx</artifactId>
-  <version>${lwjgl.version}</version>
-			<classifier>natives-${platform}</classifier>
-  </dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-  <artifactId>lwjgl-assimp</artifactId>
-			<version>${lwjgl.version}</version>
-  <classifier>natives-${platform}</classifier>
-		</dependency>
-		*/
+//  compile group: 'net.java.dev.jna', name: 'jna', version: '4.5.0'
+  testCompile group: 'org.easytesting', name: 'fest-assert', version: '1.4'
+
 }
