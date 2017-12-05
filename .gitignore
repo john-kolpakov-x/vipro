@@ -10,3 +10,4 @@ build
 *.iws
 .idea/
 *.log
+out/

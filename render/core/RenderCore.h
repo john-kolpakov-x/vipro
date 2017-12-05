@@ -1,10 +1,8 @@
-//
-// Created by pompei on 05.12.17.
-//
+#ifndef VIPRO_RENDER_CORE_RENDER_CORE_H
+#define VIPRO_RENDER_CORE_RENDER_CORE_H
 
-#ifndef VIPRO_RENDER_CORE_RENDERCORE_H
-#define VIPRO_RENDER_CORE_RENDERCORE_H
-
+#include "use_glfw3.h"
+#include "VDeleter.h"
 
 class RenderCore {
 public:
@@ -14,9 +12,12 @@ public:
 
   int getHeight();
 
+  void initialize();
+
 private:
   int width, height;
+
+  VDeleter<VkInstance> instance{vkDestroyInstance};
 };
 
-
-#endif //VIPRO_RENDER_CORE_RENDERCORE_H
+#endif //VIPRO_RENDER_CORE_RENDER_CORE_H

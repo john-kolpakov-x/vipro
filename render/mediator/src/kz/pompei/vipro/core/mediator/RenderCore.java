@@ -22,9 +22,16 @@ public class RenderCore implements AutoCloseable {
 
   private native void initReference();
 
+  public native void initialize();
+
   private native void destroyReference();
 
   private native void putSize(int sizePlace[]);
+
+  @SuppressWarnings("unused")
+  private void throwMessage(String message) {
+    throw new RuntimeException(message);
+  }
 
   public Size getSize() {
     int sizePlace[] = new int[2];

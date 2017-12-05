@@ -1,4 +1,6 @@
 #include <iostream>
+#include <locale>
+#include <codecvt>
 #include "kz_pompei_vipro_core_mediator_RenderCore.h"
 #include "RenderCore.h"
 
@@ -7,12 +9,15 @@
 
 jfieldID reference_RenderCore;
 jclass class_RenderCore;
+jmethodID throwMessage_RenderCore;
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
  * Method:    init0
  * Signature: ()V
  */
+class wide_string;
+
 extern "C"
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_init0
     (JNIEnv *env, jclass renderCoreClass) {
@@ -29,6 +34,11 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_init0
     return;
   }
 
+  throwMessage_RenderCore = env->GetMethodID(renderCoreClass, "throwMessage", "(Ljava/lang/String;)V");
+  if (!reference_RenderCore) {
+    std::cerr << R"(env->GetMethodID(renderCoreClass, "throwMessage", "(Ljava/lang/String;)V")" << std::endl;
+    return;
+  }
 }
 
 /*
@@ -82,50 +92,23 @@ Java_kz_pompei_vipro_core_mediator_RenderCore_putSize
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
- * Method:    getSize
- * Signature: ()Lkz/pompei/vipro/core/mediator/Size;
+ * Method:    initialize
+ * Signature: ()V
  */
-extern "C" JNIEXPORT jobject JNICALL
-Java_kz_pompei_vipro_core_mediator_RenderCore_getSize
+extern "C" JNIEXPORT void JNICALL
+Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
     (JNIEnv *env, jobject renderCoreObject) {
 
-  jclass class_Size = env->FindClass("kz/pompei/vipro/core/mediator/Size");
-  if (!class_Size) {
-    std::cerr << "Cannot load class Size" << std::endl;
-    return nullptr;
+  try {
+    getReference(env, renderCoreObject)->initialize();
+  }
+  catch (const std::runtime_error &e) {
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conversion;
+    auto s = conversion.from_bytes(e.what());
+    jstring message = env->NewString((const jchar *) s.c_str(), static_cast<jsize>(s.length()));
+    env->CallVoidMethod(renderCoreObject, throwMessage_RenderCore, message);
   }
 
-  jfieldID width_Size = env->GetFieldID(class_Size, "width", "I");
-  if (!width_Size) {
-    std::cerr << R"(env->GetFieldID(class_Size, "width", "I"))" << std::endl;
-    return nullptr;
-  }
-
-  jfieldID height_Size = env->GetFieldID(class_Size, "height", "I");
-  if (!height_Size) {
-    std::cerr << R"(env->GetFieldID(class_Size, "height", "I"))" << std::endl;
-    return nullptr;
-  }
-
-  jmethodID constructor_Size = env->GetMethodID(class_Size, "<init>", "()V");
-  if (!constructor_Size) {
-    std::cerr << R"(env->GetMethodID(class_Size, "<init>", "()V"))" << std::endl;
-    return nullptr;
-  }
-
-  auto core = getReference(env, renderCoreObject);
-
-  jobject size = env->NewObject(class_Size, constructor_Size);
-  if (!size) {
-    std::cerr << R"(env->NewObject(class_Size, constructor_Size))" << std::endl;
-    return nullptr;
-  }
-
-  env->SetIntField(size, width_Size, core->getWidth());
-
-  env->SetIntField(size, height_Size, core->getHeight());
-
-  return size;
 }
 
 #pragma clang diagnostic pop
