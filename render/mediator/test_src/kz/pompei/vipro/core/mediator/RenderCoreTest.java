@@ -10,6 +10,11 @@ public class RenderCoreTest {
 
     try (RenderCore renderCore = new RenderCore()) {
       assertThat(renderCore.__readReference__()).isNotEqualTo(0);
+
+      Size size = renderCore.getSize();
+      assertThat(size).isNotNull();
+      assertThat(size.width).isEqualTo(800);
+      assertThat(size.height).isEqualTo(600);
     }
 
   }

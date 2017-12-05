@@ -10,5 +10,5 @@ find_package(JNI REQUIRED)
 include_directories(${JAVA_INCLUDE_PATH})
 include_directories(${JAVA_INCLUDE_PATH2})
 
-set(SOURCE_FILES kz_pompei_vipro_core_mediator_RenderCore.cpp kz_pompei_vipro_core_mediator_RenderCore.h)
+set(SOURCE_FILES kz_pompei_vipro_core_mediator_RenderCore.cpp kz_pompei_vipro_core_mediator_RenderCore.h RenderCore.cpp RenderCore.h)
 add_library(vipro_render_core SHARED ${SOURCE_FILES})
