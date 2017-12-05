@@ -1,3 +1,5 @@
 rootProject.name = 'vipro'
 include 'visitors.probe'
 include 'probe3d'
+include 'render:core'
+include 'render:mediator'

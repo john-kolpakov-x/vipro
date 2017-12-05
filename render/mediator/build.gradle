@@ -1,0 +1,15 @@
+dependencies {
+  testCompile group: 'org.easytesting', name: 'fest-assert', version: '1.4'
+}
+
+compileJava.options.compilerArgs.addAll(['-h', "${buildDir}/c_headers"])
+
+task copyCHeaders(type: Copy) {
+  dependsOn compileJava
+  group "build"
+  from("${buildDir}/c_headers") {
+    include '*.h'
+  }
+  //noinspection GroovyAssignabilityCheck
+  into project(':render:core').projectDir
+}
