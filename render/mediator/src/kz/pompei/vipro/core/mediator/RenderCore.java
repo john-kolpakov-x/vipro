@@ -24,7 +24,16 @@ public class RenderCore implements AutoCloseable {
 
   private native void destroyReference();
 
-  public native Size getSize();
+  private native void putSize(int sizePlace[]);
+
+  public Size getSize() {
+    int sizePlace[] = new int[2];
+    putSize(sizePlace);
+    Size ret = new Size();
+    ret.width = sizePlace[0];
+    ret.height = sizePlace[1];
+    return ret;
+  }
 
   long __readReference__() {
     return reference;

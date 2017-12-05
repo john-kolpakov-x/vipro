@@ -33,11 +33,11 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_destroyRefe
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
- * Method:    getSize
- * Signature: ()Lkz/pompei/vipro/core/mediator/Size;
+ * Method:    putSize
+ * Signature: ([I)V
  */
-JNIEXPORT jobject JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_getSize
-  (JNIEnv *, jobject);
+JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_putSize
+  (JNIEnv *, jobject, jintArray);
 
 #ifdef __cplusplus
 }

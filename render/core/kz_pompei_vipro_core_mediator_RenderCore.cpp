@@ -63,6 +63,25 @@ Java_kz_pompei_vipro_core_mediator_RenderCore_destroyReference
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
+ * Method:    putSize
+ * Signature: ([I)V
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_kz_pompei_vipro_core_mediator_RenderCore_putSize
+    (JNIEnv *env, jobject renderCoreObject, jintArray out) {
+
+  auto core = getReference(env, renderCoreObject);
+
+  jint size[2];
+  size[0] = core->getWidth();
+  size[1] = core->getHeight();
+
+  env->SetIntArrayRegion(out, 0, 2, size);
+
+}
+
+/*
+ * Class:     kz_pompei_vipro_core_mediator_RenderCore
  * Method:    getSize
  * Signature: ()Lkz/pompei/vipro/core/mediator/Size;
  */
