@@ -31,6 +31,10 @@ private:
   QueueFamilyIndices queueFamilyIndices;
   VkQueue presentQueue;
   VDeleter<VkDevice> device{vkDestroyDevice};
+  VDeleter<VkSwapchainKHR> swapChain{device, vkDestroySwapchainKHR};
+  std::vector<VkImage> swapChainImages;
+  VkFormat swapChainImageFormat;
+  VkExtent2D swapChainExtent;
 
   void initWindow();
 
@@ -67,6 +71,8 @@ private:
       const char *layerPrefix, const char *msg);
 
   bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
+
+  void initVulkan_createSwapChain();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

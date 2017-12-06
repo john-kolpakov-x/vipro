@@ -28,11 +28,11 @@ private:
 
 public:
 
-  uint32_t graphicsIndex() {
+  uint32_t graphicsIndex() const {
     return static_cast<uint32_t>(_graphicsIndex);
   }
 
-  uint32_t presentIndex() {
+  uint32_t presentIndex() const {
     return static_cast<uint32_t>(_presentIndex);
   }
 
@@ -65,5 +65,11 @@ struct SwapChainSupportDetails {
 };
 
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
+
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
+
+VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, int width, int height);
 
 #endif //VIPRO_RENDER_CORE_VK_UTIL_H
