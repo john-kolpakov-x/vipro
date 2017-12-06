@@ -1,5 +1,6 @@
 #include <sstream>
 #include "vk_util.h"
+#include "RenderCore.h"
 
 void checkResult(VkResult result, const char *placeMessage) {
   if (result == VK_SUCCESS) return;
@@ -66,4 +67,35 @@ std::string translateVkResult(VkResult result) {
       return out.str();
       //return String.format("%s [%d]", "Unknown", Integer.valueOf(result));
   }
+}
+
+
+VkResult createDebugReportCallbackEXT(VkInstance instance,
+                                      const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
+                                      const VkAllocationCallbacks *pAllocator,
+                                      VkDebugReportCallbackEXT *pCallback) {
+  auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+  if (func != nullptr) {
+    return func(instance, pCreateInfo, pAllocator, pCallback);
+  } else {
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+  }
+}
+
+void destroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback,
+                                   const VkAllocationCallbacks *pAllocator) {
+  auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+  if (func != nullptr) {
+    func(instance, callback, pAllocator);
+  }
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackStatic(
+    VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
+    uint64_t obj, size_t location, int32_t code,
+    const char *layerPrefix, const char *msg, void *userData) {
+
+  bool ret = ((RenderCore *) userData)->debugCallback(flags, objType, obj, location, code, layerPrefix, msg);
+
+  return ret ? VK_TRUE : VK_FALSE;
 }

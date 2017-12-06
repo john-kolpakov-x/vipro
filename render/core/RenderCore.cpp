@@ -1,8 +1,20 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
+#include <vector>
+#include <cstring>
 #include "RenderCore.h"
 #include "vk_util.h"
+
+const std::vector<const char *> validationLayers = { // NOLINT
+    "VK_LAYER_LUNARG_standard_validation"
+};
+
+#ifdef NDEBUG
+const bool enableValidationLayers = false;
+#else
+const bool enableValidationLayers = true;
+#endif
 
 RenderCore::RenderCore() : width(800), height(600)// NOLINT
 {}
@@ -44,6 +56,21 @@ void RenderCore::mainLoop() {
 }
 
 void RenderCore::initVulkan() {
+  initVulkan_createInstance();
+  initVulkan_setupDebugCallback();
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCSimplifyInspection"
+#pragma clang diagnostic ignored "-Wreturn-stack-address"
+#pragma ide diagnostic ignored "OCDFAInspection"
+
+void RenderCore::initVulkan_createInstance() {
+
+  if (enableValidationLayers && !checkValidationLayerSupport()) {
+    throw std::runtime_error("Validation Layers нужны, но не доступны!");
+  }
+
   VkApplicationInfo appInfo = {};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   appInfo.pApplicationName = "Vipro";
@@ -56,16 +83,147 @@ void RenderCore::initVulkan() {
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   createInfo.pApplicationInfo = &appInfo;
 
-  unsigned int glfwExtensionCount = 0;
-  const char **glfwExtensions;
+  auto extensions = getRequiredExtensions();
+  checkExtensions(extensions);
 
-  glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+  createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+  createInfo.ppEnabledExtensionNames = extensions.data();
 
-  createInfo.enabledExtensionCount = glfwExtensionCount;
-  createInfo.ppEnabledExtensionNames = glfwExtensions;
-
-  createInfo.enabledLayerCount = 0;
+  if (enableValidationLayers) {
+    createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+    createInfo.ppEnabledLayerNames = validationLayers.data();
+  } else {
+    createInfo.enabledLayerCount = 0;
+  }
 
   VkResult result = vkCreateInstance(&createInfo, nullptr, instance.replace());
   checkResult(result, "vkCreateInstance");
 }
+
+#pragma clang diagnostic pop
+
+bool RenderCore::checkValidationLayerSupport() {
+  uint32_t layerCount;
+  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+  std::vector<VkLayerProperties> availableLayers(layerCount);
+  vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+  for (const char *layerName : validationLayers) {
+    bool layerFound = false;
+
+    for (const auto &layerProperties : availableLayers) {
+      if (strcmp(layerName, layerProperties.layerName) == 0) {
+        layerFound = true;
+        break;
+      }
+    }
+
+    if (!layerFound) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCSimplifyInspection"
+
+std::vector<const char *> RenderCore::getRequiredExtensions() {
+  std::vector<const char *> extensions;
+
+  unsigned int glfwExtensionCount = 0;
+  const char **glfwExtensions;
+  glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+  for (unsigned int i = 0; i < glfwExtensionCount; i++) {
+    extensions.push_back(glfwExtensions[i]);
+  }
+
+  if (enableValidationLayers) {
+    extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+  }
+
+  return extensions;
+}
+
+#pragma clang diagnostic pop
+
+void RenderCore::checkExtensions(std::vector<const char *> requiredExtensions) {
+  uint32_t extensionCount = 0;
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+  std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
+
+  std::cout << "Доступные расширения:" << std::endl;
+
+  for (const auto &extension : availableExtensions) {
+    std::cout << "    " << extension.extensionName << std::endl;
+  }
+
+  std::cout << "Необходимые расширения:" << std::endl;
+
+  for (const auto &extension : requiredExtensions) {
+    std::cout << "    " << extension << std::endl;
+  }
+
+  for (const auto &requiredExtension : requiredExtensions) {
+    bool found = false;
+    for (const auto &availableExtension : availableExtensions) {
+      if (strcmp(availableExtension.extensionName, requiredExtension) == 0) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      std::ostringstream out;
+      out << "Не доступно необходимое расширение " << requiredExtension;
+      throw std::runtime_error(out.str());
+    }
+  }
+}
+
+void RenderCore::initVulkan_setupDebugCallback() {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCSimplifyInspection"
+#pragma ide diagnostic ignored "OCDFAInspection"
+  if (!enableValidationLayers) return;
+#pragma clang diagnostic pop
+
+  VkDebugReportCallbackCreateInfoEXT createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+  createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+  createInfo.pfnCallback = debugCallbackStatic;
+  createInfo.pUserData = this;
+
+  VkResult result = createDebugReportCallbackEXT(instance, &createInfo, nullptr, callback.replace());
+  checkResult(result, "Ну получилось установить Debug Callback");
+}
+
+bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj,
+                               size_t location, int32_t code, const char *layerPrefix, const char *msg) {
+
+  std::cerr << "Validation layer: " << msg << std::endl;
+  std::cerr << "    flags: " << flags << std::endl;
+  std::cerr << "    objType: " << objType << std::endl;
+  std::cerr << "    obj: " << obj << std::endl;
+  std::cerr << "    location: " << location << std::endl;
+  std::cerr << "    code: " << code << std::endl;
+  std::cerr << "    layerPrefix: " << layerPrefix << std::endl;
+  std::cerr << std::endl;
+
+  return false;
+}
+
+RenderCore::~RenderCore() {
+//  destroyDebugReportCallbackEXT(instance, callback, nullptr);
+//  vkDestroyInstance(instance, nullptr);
+
+  glfwDestroyWindow(window);
+
+  glfwTerminate();
+}
+
+
