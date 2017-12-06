@@ -264,7 +264,8 @@ bool RenderCore::isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIn
   std::cout << "    geometryShader = " << (deviceFeatures.geometryShader ? "TRUE" : "FALSE") << std::endl;
 
   if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
-      || !deviceFeatures.geometryShader) return false;
+      || !deviceFeatures.geometryShader)
+    return false;
 
   {
     auto indices = findQueueFamilyIndicesIn(aPhysicalDevice);
@@ -278,7 +279,7 @@ bool RenderCore::isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIn
 
   {
     SwapChainSupportDetails scs = querySwapChainSupport(aPhysicalDevice, surface);
-    if (scs.formats.empty() || scs.presentModes.empty()) return false;
+    if (scs.notAdequate()) return false;
   }
 
   return true;
