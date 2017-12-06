@@ -29,6 +29,8 @@ private:
 
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
+  VDeleter<VkDevice> device{vkDestroyDevice};
+
   void initWindow();
 
   void initVulkan();
@@ -36,6 +38,8 @@ private:
   void initVulkan_createInstance();
 
   void initVulkan_selectPhysicalDevice();
+
+  void initVulkan_createLogicalDevice();
 
   bool isDeviceSuitable(VkPhysicalDevice device, int index);
 
@@ -56,6 +60,8 @@ private:
       VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
       uint64_t obj, size_t location, int32_t code,
       const char *layerPrefix, const char *msg);
+
+  uint32_t findSuitableFamilyIndex();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

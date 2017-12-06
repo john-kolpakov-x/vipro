@@ -58,6 +58,7 @@ void RenderCore::initVulkan() {
   initVulkan_createInstance();
   initVulkan_setupDebugCallback();
   initVulkan_selectPhysicalDevice();
+  initVulkan_createLogicalDevice();
 }
 
 #pragma clang diagnostic push
@@ -261,3 +262,65 @@ bool RenderCore::isDeviceSuitable(VkPhysicalDevice physicalDevice, int index) {
   return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
          && deviceFeatures.geometryShader;
 }
+
+static bool isQueueFamilySuitable(const VkQueueFamilyProperties &queueFamily) {
+  if (queueFamily.queueCount == 0) return false;
+  if (!(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) return false;
+
+  return true;
+}
+
+uint32_t RenderCore::findSuitableFamilyIndex() {
+
+  uint32_t queueFamilyCount = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+
+  std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+  uint32_t index = 0;
+  for (const auto &queueFamily : queueFamilies) {
+    if (isQueueFamilySuitable(queueFamily)) {
+      return index;
+    }
+  }
+
+  throw std::runtime_error("Не найдена подходящая группа очередей");
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-stack-address"
+#pragma ide diagnostic ignored "OCDFAInspection"
+
+void RenderCore::initVulkan_createLogicalDevice() {
+  uint32_t queueFamilyIndex = findSuitableFamilyIndex();
+
+  VkDeviceQueueCreateInfo queueCreateInfo = {};
+  queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+  queueCreateInfo.queueCount = 1;
+
+  float queuePriority = 1.0f;
+  queueCreateInfo.pQueuePriorities = &queuePriority;
+
+  VkPhysicalDeviceFeatures deviceFeatures = {};
+
+  VkDeviceCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  createInfo.pEnabledFeatures = &deviceFeatures;
+  createInfo.pQueueCreateInfos = &queueCreateInfo;
+  createInfo.queueCreateInfoCount = 1;
+
+  createInfo.enabledExtensionCount = 0;
+  if (enableValidationLayers) {
+    createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+    createInfo.ppEnabledLayerNames = validationLayers.data();
+  } else {
+    createInfo.enabledLayerCount = 0;
+  }
+
+  VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, device.replace());
+  checkResult(result, "Невозможно создать логическое устройство");
+}
+
+#pragma clang diagnostic pop
