@@ -14,10 +14,17 @@ public:
 
   void initialize();
 
+  void mainLoop();
+
 private:
   int width, height;
 
+  GLFWwindow* window;
   VDeleter<VkInstance> instance{vkDestroyInstance};
+
+  void initWindow();
+
+  void initVulkan();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

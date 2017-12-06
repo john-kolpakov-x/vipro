@@ -8,6 +8,7 @@ public class ProbeLauncher {
   private void run() {
     RenderCore renderCore = new RenderCore();
     renderCore.initialize();
+    renderCore.mainLoop();
 
     System.out.println("OK");
   }

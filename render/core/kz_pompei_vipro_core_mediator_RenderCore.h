@@ -33,6 +33,14 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
+ * Method:    mainLoop
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_mainLoop
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     kz_pompei_vipro_core_mediator_RenderCore
  * Method:    destroyReference
  * Signature: ()V
  */

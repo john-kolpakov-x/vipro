@@ -111,4 +111,25 @@ Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
 
 }
 
+/*
+ * Class:     kz_pompei_vipro_core_mediator_RenderCore
+ * Method:    mainLoop
+ * Signature: ()V
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_kz_pompei_vipro_core_mediator_RenderCore_mainLoop
+    (JNIEnv *env, jobject renderCoreObject) {
+
+  try {
+    getReference(env, renderCoreObject)->mainLoop();
+  }
+  catch (const std::runtime_error &e) {
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conversion;
+    auto s = conversion.from_bytes(e.what());
+    jstring message = env->NewString((const jchar *) s.c_str(), static_cast<jsize>(s.length()));
+    env->CallVoidMethod(renderCoreObject, throwMessage_RenderCore, message);
+  }
+
+}
+
 #pragma clang diagnostic pop
