@@ -57,6 +57,7 @@ void RenderCore::mainLoop() {
 void RenderCore::initVulkan() {
   initVulkan_createInstance();
   initVulkan_setupDebugCallback();
+  initVulkan_createSurface();
   initVulkan_selectPhysicalDevice();
   initVulkan_createLogicalDevice();
 }
@@ -98,7 +99,7 @@ void RenderCore::initVulkan_createInstance() {
   }
 
   VkResult result = vkCreateInstance(&createInfo, nullptr, instance.replace());
-  checkResult(result, "vkCreateInstance");
+  checkResult(result, "Создание инстанции вулкана");
 }
 
 #pragma clang diagnostic pop
@@ -200,7 +201,7 @@ void RenderCore::initVulkan_setupDebugCallback() {
   createInfo.pUserData = this;
 
   VkResult result = createDebugReportCallbackEXT(instance, &createInfo, nullptr, callback.replace());
-  checkResult(result, "Ну получилось установить Debug Callback");
+  checkResult(result, "Установка Debug Callback");
 }
 
 bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj,
@@ -320,7 +321,12 @@ void RenderCore::initVulkan_createLogicalDevice() {
   }
 
   VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, device.replace());
-  checkResult(result, "Невозможно создать логическое устройство");
+  checkResult(result, "Создание логического устройства");
+}
+
+void RenderCore::initVulkan_createSurface() {
+  VkResult result = glfwCreateWindowSurface(instance, window, nullptr, surface.replace());
+  checkResult(result, "Создания поверхности окна");
 }
 
 #pragma clang diagnostic pop

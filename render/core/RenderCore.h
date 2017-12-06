@@ -26,9 +26,8 @@ private:
   GLFWwindow *window;
   VDeleter<VkInstance> instance{vkDestroyInstance};
   VDeleter<VkDebugReportCallbackEXT> callback{instance, destroyDebugReportCallbackEXT};
-
+  VDeleter<VkSurfaceKHR> surface{instance, vkDestroySurfaceKHR};
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-
   VDeleter<VkDevice> device{vkDestroyDevice};
 
   void initWindow();
@@ -62,6 +61,8 @@ private:
       const char *layerPrefix, const char *msg);
 
   uint32_t findSuitableFamilyIndex();
+
+  void initVulkan_createSurface();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

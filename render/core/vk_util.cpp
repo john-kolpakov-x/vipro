@@ -1,11 +1,15 @@
 #include <sstream>
+#include <iostream>
 #include "vk_util.h"
 #include "RenderCore.h"
 
 void checkResult(VkResult result, const char *placeMessage) {
-  if (result == VK_SUCCESS) return;
+  if (result == VK_SUCCESS) {
+    std::cout << placeMessage << " - OK" << std::endl;
+    return;
+  }
   std::ostringstream out;
-  out << placeMessage << " : " << translateVkResult(result);
+  out << placeMessage << " - ERROR : " << translateVkResult(result);
   throw std::runtime_error(out.str());
 }
 
