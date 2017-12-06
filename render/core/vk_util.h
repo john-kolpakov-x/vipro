@@ -2,6 +2,7 @@
 #define VIPRO_RENDER_CORE_VK_UTIL_H
 
 #include <set>
+#include <vector>
 #include "use_glfw3.h"
 
 void checkResult(VkResult result, const char *placeMessage);
@@ -52,5 +53,13 @@ public:
     return ret;
   }
 };
+
+struct SwapChainSupportDetails {
+  VkSurfaceCapabilitiesKHR capabilities;
+  std::vector<VkSurfaceFormatKHR> formats;
+  std::vector<VkPresentModeKHR> presentModes;
+};
+
+SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
 #endif //VIPRO_RENDER_CORE_VK_UTIL_H

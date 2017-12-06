@@ -8,6 +8,9 @@
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
 };
+const std::vector<const char *> deviceExtensions = { // NOLINT
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -158,13 +161,13 @@ void RenderCore::checkExtensions(std::vector<const char *> requiredExtensions) {
   std::vector<VkExtensionProperties> availableExtensions(extensionCount);
   vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
 
-  std::cout << "Доступные расширения:" << std::endl;
+  std::cout << "Доступные расширения инстанции вулкана:" << std::endl;
 
   for (const auto &extension : availableExtensions) {
     std::cout << "    " << extension.extensionName << std::endl;
   }
 
-  std::cout << "Необходимые расширения:" << std::endl;
+  std::cout << "Необходимые расширения инстанции вулкана:" << std::endl;
 
   for (const auto &extension : requiredExtensions) {
     std::cout << "    " << extension << std::endl;
@@ -260,11 +263,25 @@ bool RenderCore::isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIn
   std::cout << "    limits.maxImageDimension3D = " << deviceProperties.limits.maxImageDimension3D << std::endl;
   std::cout << "    geometryShader = " << (deviceFeatures.geometryShader ? "TRUE" : "FALSE") << std::endl;
 
-  auto indices = findQueueFamilyIndicesIn(aPhysicalDevice);
-  if (!indices.allFound()) return false;
+  if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+      || !deviceFeatures.geometryShader) return false;
 
-  return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
-         && deviceFeatures.geometryShader;
+  {
+    auto indices = findQueueFamilyIndicesIn(aPhysicalDevice);
+    if (!indices.allFound()) return false;
+  }
+
+  {
+    bool extensionsSupported = checkDeviceExtensionSupport(aPhysicalDevice);
+    if (!extensionsSupported) return false;
+  }
+
+  {
+    SwapChainSupportDetails scs = querySwapChainSupport(aPhysicalDevice, surface);
+    if (scs.formats.empty() || scs.presentModes.empty()) return false;
+  }
+
+  return true;
 }
 
 QueueFamilyIndices RenderCore::findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice) {
@@ -341,15 +358,43 @@ void RenderCore::initVulkan_createLogicalDevice() {
     createInfo.enabledLayerCount = 0;
   }
 
+  createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+  createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
   VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, device.replace());
   checkResult(result, "Создание логического устройства");
 
   vkGetDeviceQueue(device, queueFamilyIndices.presentIndex(), 0, &presentQueue);
+  std::cout << "presentQueue = " << presentQueue << std::endl;
 }
+
+#pragma clang diagnostic pop
 
 void RenderCore::initVulkan_createSurface() {
   VkResult result = glfwCreateWindowSurface(instance, window, nullptr, surface.replace());
   checkResult(result, "Создания поверхности окна");
 }
 
-#pragma clang diagnostic pop
+bool RenderCore::checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice) {
+  uint32_t extensionCount;
+  vkEnumerateDeviceExtensionProperties(aPhysicalDevice, nullptr, &extensionCount, nullptr);
+
+  std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+  vkEnumerateDeviceExtensionProperties(aPhysicalDevice, nullptr, &extensionCount, availableExtensions.data());
+
+  std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+  std::cout << "Требуемые расширения девайса:" << std::endl;
+  for (auto &de: deviceExtensions) {
+    std::cout << "    " << de << std::endl;
+  }
+
+  std::cout << "Имеющиеся расширения девайса:" << std::endl;
+  for (const auto &extension : availableExtensions) {
+    std::cout << "    " << extension.extensionName << std::endl;
+    requiredExtensions.erase(extension.extensionName);
+  }
+
+  return requiredExtensions.empty();
+}
+

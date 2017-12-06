@@ -65,6 +65,8 @@ private:
       VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
       uint64_t obj, size_t location, int32_t code,
       const char *layerPrefix, const char *msg);
+
+  bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H
