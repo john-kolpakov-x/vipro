@@ -234,9 +234,9 @@ void RenderCore::initVulkan_selectPhysicalDevice() {
   vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
   int index = 1;
-  for (const auto &device : devices) {
-    if (isDeviceSuitable(device, index++)) {
-      physicalDevice = device;
+  for (const auto &aPhysicalDevice : devices) {
+    if (isDeviceSuitable(aPhysicalDevice, index++)) {
+      physicalDevice = aPhysicalDevice;
     }
   }
 
@@ -245,48 +245,60 @@ void RenderCore::initVulkan_selectPhysicalDevice() {
   }
 }
 
-bool RenderCore::isDeviceSuitable(VkPhysicalDevice physicalDevice, int index) {
+bool RenderCore::isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIndex) {
 
   VkPhysicalDeviceProperties deviceProperties; // NOLINT
-  vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+  vkGetPhysicalDeviceProperties(aPhysicalDevice, &deviceProperties);
 
   VkPhysicalDeviceFeatures deviceFeatures; // NOLINT
-  vkGetPhysicalDeviceFeatures(physicalDevice, &deviceFeatures);
+  vkGetPhysicalDeviceFeatures(aPhysicalDevice, &deviceFeatures);
 
-  std::cout << "Физическое устройство " << index << ": (physicalDevice = " << physicalDevice << ")" << std::endl;
+  std::cout << "Физическое устройство " << deviceIndex << ": (physicalDevice = " << aPhysicalDevice << ")" << std::endl;
   std::cout << "    deviceName = " << deviceProperties.deviceName << std::endl;
   std::cout << "    limits.maxImageDimension1D = " << deviceProperties.limits.maxImageDimension1D << std::endl;
   std::cout << "    limits.maxImageDimension2D = " << deviceProperties.limits.maxImageDimension2D << std::endl;
   std::cout << "    limits.maxImageDimension3D = " << deviceProperties.limits.maxImageDimension3D << std::endl;
   std::cout << "    geometryShader = " << (deviceFeatures.geometryShader ? "TRUE" : "FALSE") << std::endl;
 
+  auto indices = findQueueFamilyIndicesIn(aPhysicalDevice);
+  if (!indices.allFound()) return false;
+
   return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
          && deviceFeatures.geometryShader;
 }
 
-static bool isQueueFamilySuitable(const VkQueueFamilyProperties &queueFamily) {
-  if (queueFamily.queueCount == 0) return false;
-  if (!(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) return false;
-
-  return true;
-}
-
-uint32_t RenderCore::findSuitableFamilyIndex() {
+QueueFamilyIndices RenderCore::findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice) {
 
   uint32_t queueFamilyCount = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+  vkGetPhysicalDeviceQueueFamilyProperties(aPhysicalDevice, &queueFamilyCount, nullptr);
 
   std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+  vkGetPhysicalDeviceQueueFamilyProperties(aPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
-  uint32_t index = 0;
+  QueueFamilyIndices ret = {};
+
+  int index = 0;
   for (const auto &queueFamily : queueFamilies) {
-    if (isQueueFamilySuitable(queueFamily)) {
-      return index;
+    if (queueFamily.queueCount > 0) {
+
+      if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        ret.goodGraphicsIndex(index);
+      }
+
+      VkBool32 presentSupport = VK_FALSE;
+      vkGetPhysicalDeviceSurfaceSupportKHR(aPhysicalDevice, static_cast<uint32_t>(index), surface, &presentSupport);
+
+      if (presentSupport) {
+        ret.goodPresentIndex(index);
+      }
     }
+
+    if (ret.allFound()) break;
+
+    index++;
   }
 
-  throw std::runtime_error("Не найдена подходящая группа очередей");
+  return ret;
 }
 
 #pragma clang diagnostic push
@@ -294,23 +306,32 @@ uint32_t RenderCore::findSuitableFamilyIndex() {
 #pragma ide diagnostic ignored "OCDFAInspection"
 
 void RenderCore::initVulkan_createLogicalDevice() {
-  uint32_t queueFamilyIndex = findSuitableFamilyIndex();
 
-  VkDeviceQueueCreateInfo queueCreateInfo = {};
-  queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
-  queueCreateInfo.queueCount = 1;
+  queueFamilyIndices = findQueueFamilyIndicesIn(physicalDevice);
+  if (!queueFamilyIndices.allFound()) throw std::runtime_error("Не найдены все подходящие группы очередей");
+
+  auto uniqueQueueFamilyIndices = queueFamilyIndices.uniqueQueueFamilies();
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfoVector;
 
   float queuePriority = 1.0f;
-  queueCreateInfo.pQueuePriorities = &queuePriority;
+
+  for (auto queueFamilyIndex : uniqueQueueFamilyIndices) {
+    VkDeviceQueueCreateInfo queueCreateInfo = {};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    queueCreateInfo.queueCount = 1;
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfoVector.push_back(queueCreateInfo);
+    std::cout << "queueFamilyIndex = " << queueFamilyIndex << std::endl;
+  }
 
   VkPhysicalDeviceFeatures deviceFeatures = {};
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   createInfo.pEnabledFeatures = &deviceFeatures;
-  createInfo.pQueueCreateInfos = &queueCreateInfo;
-  createInfo.queueCreateInfoCount = 1;
+  createInfo.pQueueCreateInfos = queueCreateInfoVector.data();
+  createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfoVector.size());
 
   createInfo.enabledExtensionCount = 0;
   if (enableValidationLayers) {
@@ -322,6 +343,8 @@ void RenderCore::initVulkan_createLogicalDevice() {
 
   VkResult result = vkCreateDevice(physicalDevice, &createInfo, nullptr, device.replace());
   checkResult(result, "Создание логического устройства");
+
+  vkGetDeviceQueue(device, queueFamilyIndices.presentIndex(), 0, &presentQueue);
 }
 
 void RenderCore::initVulkan_createSurface() {

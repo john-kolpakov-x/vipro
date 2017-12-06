@@ -28,6 +28,8 @@ private:
   VDeleter<VkDebugReportCallbackEXT> callback{instance, destroyDebugReportCallbackEXT};
   VDeleter<VkSurfaceKHR> surface{instance, vkDestroySurfaceKHR};
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  QueueFamilyIndices queueFamilyIndices;
+  VkQueue presentQueue;
   VDeleter<VkDevice> device{vkDestroyDevice};
 
   void initWindow();
@@ -36,19 +38,23 @@ private:
 
   void initVulkan_createInstance();
 
+  void initVulkan_setupDebugCallback();
+
+  void initVulkan_createSurface();
+
+  QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
+
   void initVulkan_selectPhysicalDevice();
 
   void initVulkan_createLogicalDevice();
 
-  bool isDeviceSuitable(VkPhysicalDevice device, int index);
+  bool isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIndex);
 
   bool checkValidationLayerSupport();
 
   std::vector<const char *> getRequiredExtensions();
 
   void checkExtensions(std::vector<const char *> requiredExtensions);
-
-  void initVulkan_setupDebugCallback();
 
   friend VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackStatic( // NOLINT
       VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
@@ -59,10 +65,6 @@ private:
       VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
       uint64_t obj, size_t location, int32_t code,
       const char *layerPrefix, const char *msg);
-
-  uint32_t findSuitableFamilyIndex();
-
-  void initVulkan_createSurface();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H
