@@ -27,11 +27,17 @@ private:
   VDeleter<VkInstance> instance{vkDestroyInstance};
   VDeleter<VkDebugReportCallbackEXT> callback{instance, destroyDebugReportCallbackEXT};
 
+  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
   void initWindow();
 
   void initVulkan();
 
   void initVulkan_createInstance();
+
+  void initVulkan_selectPhysicalDevice();
+
+  bool isDeviceSuitable(VkPhysicalDevice device, int index);
 
   bool checkValidationLayerSupport();
 

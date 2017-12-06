@@ -4,7 +4,6 @@
 #include <vector>
 #include <cstring>
 #include "RenderCore.h"
-#include "vk_util.h"
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -58,6 +57,7 @@ void RenderCore::mainLoop() {
 void RenderCore::initVulkan() {
   initVulkan_createInstance();
   initVulkan_setupDebugCallback();
+  initVulkan_selectPhysicalDevice();
 }
 
 #pragma clang diagnostic push
@@ -218,12 +218,46 @@ bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectT
 }
 
 RenderCore::~RenderCore() {
-//  destroyDebugReportCallbackEXT(instance, callback, nullptr);
-//  vkDestroyInstance(instance, nullptr);
-
   glfwDestroyWindow(window);
-
   glfwTerminate();
 }
 
+void RenderCore::initVulkan_selectPhysicalDevice() {
+  uint32_t deviceCount = 0;
+  vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
+  if (deviceCount == 0) throw std::runtime_error("Нет физических устройств для вулкана");
+
+  std::vector<VkPhysicalDevice> devices(deviceCount);
+  vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+  int index = 1;
+  for (const auto &device : devices) {
+    if (isDeviceSuitable(device, index++)) {
+      physicalDevice = device;
+    }
+  }
+
+  if (physicalDevice == VK_NULL_HANDLE) {
+    throw std::runtime_error("Не найдено подходящих физических устройств для вулкана");
+  }
+}
+
+bool RenderCore::isDeviceSuitable(VkPhysicalDevice physicalDevice, int index) {
+
+  VkPhysicalDeviceProperties deviceProperties; // NOLINT
+  vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+
+  VkPhysicalDeviceFeatures deviceFeatures; // NOLINT
+  vkGetPhysicalDeviceFeatures(physicalDevice, &deviceFeatures);
+
+  std::cout << "Физическое устройство " << index << ": (physicalDevice = " << physicalDevice << ")" << std::endl;
+  std::cout << "    deviceName = " << deviceProperties.deviceName << std::endl;
+  std::cout << "    limits.maxImageDimension1D = " << deviceProperties.limits.maxImageDimension1D << std::endl;
+  std::cout << "    limits.maxImageDimension2D = " << deviceProperties.limits.maxImageDimension2D << std::endl;
+  std::cout << "    limits.maxImageDimension3D = " << deviceProperties.limits.maxImageDimension3D << std::endl;
+  std::cout << "    geometryShader = " << (deviceFeatures.geometryShader ? "TRUE" : "FALSE") << std::endl;
+
+  return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+         && deviceFeatures.geometryShader;
+}
