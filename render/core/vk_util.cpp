@@ -4,7 +4,7 @@
 #include "vk_util.h"
 #include "RenderCore.h"
 
-void checkResult(VkResult result, const char *placeMessage) {
+void checkResult(VkResult result, const std::string& placeMessage) {
   if (result == VK_SUCCESS) {
     std::cout << placeMessage << " - OK" << std::endl;
     return;

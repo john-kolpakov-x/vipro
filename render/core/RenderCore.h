@@ -35,6 +35,7 @@ private:
   std::vector<VkImage> swapChainImages;
   VkFormat swapChainImageFormat;
   VkExtent2D swapChainExtent;
+  std::vector<VDeleter<VkImageView>> swapChainImageViews;
 
   void initWindow();
 
@@ -46,11 +47,15 @@ private:
 
   void initVulkan_createSurface();
 
-  QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
-
   void initVulkan_selectPhysicalDevice();
 
   void initVulkan_createLogicalDevice();
+
+  void initVulkan_createSwapChain();
+
+  void initVulkan_createImageViews();
+
+  QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
 
   bool isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIndex);
 
@@ -72,7 +77,7 @@ private:
 
   bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
 
-  void initVulkan_createSwapChain();
+
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

@@ -5,7 +5,7 @@
 #include <vector>
 #include "use_glfw3.h"
 
-void checkResult(VkResult result, const char *placeMessage);
+void checkResult(VkResult result, const std::string& placeMessage);
 
 std::string translateVkResult(VkResult result);
 

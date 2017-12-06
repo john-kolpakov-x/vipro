@@ -64,6 +64,7 @@ void RenderCore::initVulkan() {
   initVulkan_selectPhysicalDevice();
   initVulkan_createLogicalDevice();
   initVulkan_createSwapChain();
+  initVulkan_createImageViews();
 }
 
 #pragma clang diagnostic push
@@ -458,4 +459,28 @@ void RenderCore::initVulkan_createSwapChain() {
 }
 
 #pragma clang diagnostic pop
+
+void RenderCore::initVulkan_createImageViews() {
+  swapChainImageViews.resize(swapChainImages.size(), VDeleter<VkImageView>{device, vkDestroyImageView});
+
+  for (uint32_t i = 0; i < swapChainImages.size(); i++) {
+    VkImageViewCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    createInfo.image = swapChainImages[i];
+    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    createInfo.subresourceRange.baseMipLevel = 0;
+    createInfo.subresourceRange.levelCount = 1;
+    createInfo.subresourceRange.baseArrayLayer = 0;
+    createInfo.subresourceRange.layerCount = 1;
+
+    VkResult result = vkCreateImageView(device, &createInfo, nullptr, swapChainImageViews[i].replace());
+    std::ostringstream out;
+    out << "Создание Image View " << i + 1 << " из " << swapChainImages.size() << std::endl;
+    checkResult(result, out.str());
+  }
+}
 
