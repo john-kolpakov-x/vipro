@@ -397,15 +397,13 @@ bool RenderCore::checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice) {
   for (auto &de: deviceExtensions) {
     std::cout << "    " << de << std::endl;
   }
+  std::cout << "Имеющиеся расширения девайса:" << std::endl;
+  for (const auto &extension : availableExtensions) {
+    std::cout << "    " << extension.extensionName << std::endl;
+  }
 #endif
 
-#ifdef TRACE
-  std::cout << "Имеющиеся расширения девайса:" << std::endl;
-#endif
   for (const auto &extension : availableExtensions) {
-#ifdef TRACE
-    std::cout << "    " << extension.extensionName << std::endl;
-#endif
     requiredExtensions.erase(extension.extensionName);
   }
 
