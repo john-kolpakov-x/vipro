@@ -4,8 +4,9 @@
 #include <set>
 #include <vector>
 #include "use_glfw3.h"
+#include "options.h"
 
-void checkResult(VkResult result, const std::string& placeMessage);
+void checkResult(VkResult result, const std::string &placeMessage);
 
 std::string translateVkResult(VkResult result);
 
@@ -63,6 +64,12 @@ struct SwapChainSupportDetails {
     return formats.empty() || presentModes.empty();
   }
 };
+
+const char *surfaceFormatName(VkFormat format);
+
+const char *colorSpaceName(VkColorSpaceKHR colorSpace);
+
+std::string VkExtent2D_to_str(const VkExtent2D &value);
 
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 

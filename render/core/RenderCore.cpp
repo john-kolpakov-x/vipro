@@ -163,17 +163,16 @@ void RenderCore::checkExtensions(std::vector<const char *> requiredExtensions) {
   std::vector<VkExtensionProperties> availableExtensions(extensionCount);
   vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
 
+#ifdef TRACE
   std::cout << "Доступные расширения инстанции вулкана:" << std::endl;
-
   for (const auto &extension : availableExtensions) {
     std::cout << "    " << extension.extensionName << std::endl;
   }
-
   std::cout << "Необходимые расширения инстанции вулкана:" << std::endl;
-
   for (const auto &extension : requiredExtensions) {
     std::cout << "    " << extension << std::endl;
   }
+#endif
 
   for (const auto &requiredExtension : requiredExtensions) {
     bool found = false;
@@ -258,12 +257,14 @@ bool RenderCore::isDeviceSuitable(VkPhysicalDevice aPhysicalDevice, int deviceIn
   VkPhysicalDeviceFeatures deviceFeatures; // NOLINT
   vkGetPhysicalDeviceFeatures(aPhysicalDevice, &deviceFeatures);
 
+#ifdef TRACE
   std::cout << "Физическое устройство " << deviceIndex << ": (physicalDevice = " << aPhysicalDevice << ")" << std::endl;
   std::cout << "    deviceName = " << deviceProperties.deviceName << std::endl;
   std::cout << "    limits.maxImageDimension1D = " << deviceProperties.limits.maxImageDimension1D << std::endl;
   std::cout << "    limits.maxImageDimension2D = " << deviceProperties.limits.maxImageDimension2D << std::endl;
   std::cout << "    limits.maxImageDimension3D = " << deviceProperties.limits.maxImageDimension3D << std::endl;
   std::cout << "    geometryShader = " << (deviceFeatures.geometryShader ? "TRUE" : "FALSE") << std::endl;
+#endif
 
   if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
       || !deviceFeatures.geometryShader)
@@ -342,7 +343,9 @@ void RenderCore::initVulkan_createLogicalDevice() {
     queueCreateInfo.queueCount = 1;
     queueCreateInfo.pQueuePriorities = &queuePriority;
     queueCreateInfoVector.push_back(queueCreateInfo);
+#ifdef TRACE
     std::cout << "queueFamilyIndex = " << queueFamilyIndex << std::endl;
+#endif
   }
 
   VkPhysicalDeviceFeatures deviceFeatures = {};
@@ -368,7 +371,9 @@ void RenderCore::initVulkan_createLogicalDevice() {
   checkResult(result, "Создание логического устройства");
 
   vkGetDeviceQueue(device, queueFamilyIndices.presentIndex(), 0, &presentQueue);
+#ifdef TRACE
   std::cout << "presentQueue = " << presentQueue << std::endl;
+#endif
 }
 
 #pragma clang diagnostic pop
@@ -387,14 +392,20 @@ bool RenderCore::checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice) {
 
   std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
+#ifdef TRACE
   std::cout << "Требуемые расширения девайса:" << std::endl;
   for (auto &de: deviceExtensions) {
     std::cout << "    " << de << std::endl;
   }
+#endif
 
+#ifdef TRACE
   std::cout << "Имеющиеся расширения девайса:" << std::endl;
+#endif
   for (const auto &extension : availableExtensions) {
+#ifdef TRACE
     std::cout << "    " << extension.extensionName << std::endl;
+#endif
     requiredExtensions.erase(extension.extensionName);
   }
 
@@ -428,11 +439,17 @@ void RenderCore::initVulkan_createSwapChain() {
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
   const auto &qfi = queueFamilyIndices;
-  uint32_t pQueueFamilyIndices[] = {qfi.graphicsIndex(), qfi.graphicsIndex()};
+
+#ifdef TRACE
+  std::cout << "queueFamilyIndices" << std::endl;
+  std::cout << "    .graphicsIndex = " << qfi.graphicsIndex() << std::endl;
+  std::cout << "    .presentIndex  = " << qfi.presentIndex() << std::endl;
+#endif
 
   if (qfi.graphicsIndex() != qfi.graphicsIndex()) {
     createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
     createInfo.queueFamilyIndexCount = 2;
+    uint32_t pQueueFamilyIndices[] = {qfi.graphicsIndex(), qfi.presentIndex()};
     createInfo.pQueueFamilyIndices = pQueueFamilyIndices;
   } else {
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -456,6 +473,10 @@ void RenderCore::initVulkan_createSwapChain() {
 
   swapChainImageFormat = surfaceFormat.format;
   swapChainExtent = extent;
+#ifdef TRACE
+  std::cout << "swapChainImageFormat = " << surfaceFormatName(swapChainImageFormat) << std::endl;
+  std::cout << "swapChainExtent      = " << VkExtent2D_to_str(swapChainExtent) << std::endl;
+#endif
 }
 
 #pragma clang diagnostic pop
@@ -467,6 +488,8 @@ void RenderCore::initVulkan_createImageViews() {
     VkImageViewCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     createInfo.image = swapChainImages[i];
+    createInfo.format = swapChainImageFormat;
+    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -479,7 +502,7 @@ void RenderCore::initVulkan_createImageViews() {
 
     VkResult result = vkCreateImageView(device, &createInfo, nullptr, swapChainImageViews[i].replace());
     std::ostringstream out;
-    out << "Создание Image View " << i + 1 << " из " << swapChainImages.size() << std::endl;
+    out << "Создание Image View " << i + 1 << " из " << swapChainImages.size();
     checkResult(result, out.str());
   }
 }

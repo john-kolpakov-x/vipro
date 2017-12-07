@@ -5,6 +5,7 @@
 #include "use_glfw3.h"
 #include "VDeleter.h"
 #include "vk_util.h"
+#include "options.h"
 
 class RenderCore {
 public:
