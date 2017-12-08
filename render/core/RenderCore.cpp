@@ -67,6 +67,8 @@ void RenderCore::initVulkan() {
   initVulkan_createRenderPass();
   initVulkan_createGraphicsPipeline();
   initVulkan_createFrameBuffers();
+  initVulkan_createCommandPool();
+  initVulkan_createCommandBuffers();
 }
 
 #pragma clang diagnostic push
@@ -707,7 +709,6 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
   checkResult(result, "Создание контэйнера");
 }
 
-
 void RenderCore::initVulkan_createFrameBuffers() {
   swapChainFrameBuffers.resize(swapChainImageViews.size(), VDeleter<VkFramebuffer>{device, vkDestroyFramebuffer});
   for (size_t i = 0; i < swapChainImageViews.size(); i++) {
@@ -727,6 +728,69 @@ void RenderCore::initVulkan_createFrameBuffers() {
     VkResult result = vkCreateFramebuffer(device, &frameBufferInfo, nullptr, swapChainFrameBuffers[i].replace());
     std::ostringstream out;
     out << "Создание Frame Buffer " << (i + 1) << " из " << swapChainImageViews.size();
+    checkResult(result, out.str());
+  }
+}
+
+#pragma clang diagnostic pop
+
+void RenderCore::initVulkan_createCommandPool() {
+  VkCommandPoolCreateInfo poolInfo = {};
+  poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsIndex();
+  poolInfo.flags = 0; // Optional
+
+  VkResult result = vkCreateCommandPool(device, &poolInfo, nullptr, commandPool.replace());
+  checkResult(result, "Создание пула команд");
+
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-stack-address"
+
+void RenderCore::initVulkan_createCommandBuffers() {
+  commandBuffers.resize(swapChainFrameBuffers.size());
+
+  VkCommandBufferAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool = commandPool;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
+
+  VkResult result = vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data());
+  checkResult(result, "Выделение CommandBuffers");
+
+  for (size_t i = 0; i < commandBuffers.size(); i++) {
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    beginInfo.pInheritanceInfo = nullptr; // Optional
+
+    vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
+
+    VkRenderPassBeginInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = swapChainFrameBuffers[i];
+
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = swapChainExtent;
+
+    VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearColor;
+
+    vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+    vkCmdDraw(commandBuffers[i], /*vertexCount*/ 3, 1, /*firstVertex*/0, /*firstInstance*/0);
+
+    vkCmdEndRenderPass(commandBuffers[i]);
+
+    result = vkEndCommandBuffer(commandBuffers[i]);
+    std::ostringstream out;
+    out << "Формирование командного буфера " << (i + 1) << " из " << commandBuffers.size();
     checkResult(result, out.str());
   }
 }

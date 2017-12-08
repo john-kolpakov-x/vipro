@@ -41,6 +41,8 @@ private:
   VDeleter<VkRenderPass> renderPass{device, vkDestroyRenderPass};
   VDeleter<VkPipeline> graphicsPipeline{device, vkDestroyPipeline};
   std::vector<VDeleter<VkFramebuffer>> swapChainFrameBuffers;
+  VDeleter<VkCommandPool> commandPool{device, vkDestroyCommandPool};
+  std::vector<VkCommandBuffer> commandBuffers;
 
   void initWindow();
 
@@ -63,6 +65,12 @@ private:
   void initVulkan_createRenderPass();
 
   void initVulkan_createGraphicsPipeline();
+
+  void initVulkan_createFrameBuffers();
+
+  void initVulkan_createCommandPool();
+
+  void initVulkan_createCommandBuffers();
 
   QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
 
@@ -87,8 +95,6 @@ private:
   bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
 
   void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
-
-  void initVulkan_createFrameBuffers();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H
