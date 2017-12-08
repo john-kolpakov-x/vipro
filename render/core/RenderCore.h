@@ -40,6 +40,7 @@ private:
   VDeleter<VkPipelineLayout> pipelineLayout{device, vkDestroyPipelineLayout};
   VDeleter<VkRenderPass> renderPass{device, vkDestroyRenderPass};
   VDeleter<VkPipeline> graphicsPipeline{device, vkDestroyPipeline};
+  std::vector<VDeleter<VkFramebuffer>> swapChainFrameBuffers;
 
   void initWindow();
 
@@ -87,6 +88,7 @@ private:
 
   void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
 
+  void initVulkan_createFrameBuffers();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

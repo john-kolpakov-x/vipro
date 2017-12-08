@@ -66,6 +66,7 @@ void RenderCore::initVulkan() {
   initVulkan_createImageViews();
   initVulkan_createRenderPass();
   initVulkan_createGraphicsPipeline();
+  initVulkan_createFrameBuffers();
 }
 
 #pragma clang diagnostic push
@@ -704,6 +705,30 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
 
   result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline.replace());
   checkResult(result, "Создание контэйнера");
+}
+
+
+void RenderCore::initVulkan_createFrameBuffers() {
+  swapChainFrameBuffers.resize(swapChainImageViews.size(), VDeleter<VkFramebuffer>{device, vkDestroyFramebuffer});
+  for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+    VkImageView attachments[] = {
+        swapChainImageViews[i]
+    };
+
+    VkFramebufferCreateInfo frameBufferInfo = {};
+    frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    frameBufferInfo.renderPass = renderPass;
+    frameBufferInfo.attachmentCount = 1;
+    frameBufferInfo.pAttachments = attachments;
+    frameBufferInfo.width = swapChainExtent.width;
+    frameBufferInfo.height = swapChainExtent.height;
+    frameBufferInfo.layers = 1;
+
+    VkResult result = vkCreateFramebuffer(device, &frameBufferInfo, nullptr, swapChainFrameBuffers[i].replace());
+    std::ostringstream out;
+    out << "Создание Frame Buffer " << (i + 1) << " из " << swapChainImageViews.size();
+    checkResult(result, out.str());
+  }
 }
 
 #pragma clang diagnostic pop
