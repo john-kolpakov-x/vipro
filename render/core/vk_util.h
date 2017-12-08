@@ -5,6 +5,8 @@
 #include <vector>
 #include "use_glfw3.h"
 #include "options.h"
+#include "VDeleter.h"
+#include "shaders/shader_data.h"
 
 void checkResult(VkResult result, const std::string &placeMessage);
 

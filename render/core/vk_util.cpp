@@ -4,6 +4,8 @@
 #include "vk_util.h"
 #include "RenderCore.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCDFAInspection"
 void checkResult(VkResult result, const std::string &placeMessage) {
   if (result == VK_SUCCESS) {
 #ifdef TRACE
@@ -15,6 +17,7 @@ void checkResult(VkResult result, const std::string &placeMessage) {
   out << placeMessage << " - ERROR : " << translateVkResult(result);
   throw std::runtime_error(out.str());
 }
+#pragma clang diagnostic pop
 
 std::string translateVkResult(VkResult result) {
   switch (result) {
@@ -32,7 +35,7 @@ std::string translateVkResult(VkResult result) {
     case VK_INCOMPLETE:
       return "A return array was too small for the result.";
     case VK_SUBOPTIMAL_KHR:
-      return "A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully.";
+      return "A swapChain no longer matches the surface properties exactly, but can still be used to present to the surface successfully.";
 
       // Error codes
     case VK_ERROR_OUT_OF_HOST_MEMORY:

@@ -1,8 +1,8 @@
 #ifndef VIPRO_RENDER_CORE_RENDER_CORE_H
 #define VIPRO_RENDER_CORE_RENDER_CORE_H
 
-#include <vector>
 #include "use_glfw3.h"
+#include <vector>
 #include "VDeleter.h"
 #include "vk_util.h"
 #include "options.h"
@@ -78,7 +78,8 @@ private:
 
   bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
 
+  void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
 
+  void initVulkan_createGraphicsPipeline();
 };
-
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

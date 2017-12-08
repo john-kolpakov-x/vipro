@@ -1,11 +1,10 @@
+#include "RenderCore.h"
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
 #include <vector>
 #include <cstring>
 #include <fstream>
-#include "RenderCore.h"
-#include "shaders/shader_data.h"
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -67,6 +66,7 @@ void RenderCore::initVulkan() {
   initVulkan_createLogicalDevice();
   initVulkan_createSwapChain();
   initVulkan_createImageViews();
+  initVulkan_createGraphicsPipeline();
 }
 
 #pragma clang diagnostic push
@@ -507,7 +507,24 @@ void RenderCore::initVulkan_createImageViews() {
   }
 }
 
-void asd() {
-  getTriFragShaderData();
-  getTriVertShaderData();
+void RenderCore::createShaderModule(const ShaderCode shaderCode,
+                                    VDeleter<VkShaderModule> &shaderModule,
+                                    const std::string &name) {
+
+  VkShaderModuleCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.codeSize = shaderCode.len;
+  createInfo.pCode = (uint32_t *) shaderCode.data;
+
+  VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, shaderModule.replace());
+  checkResult(result, name);
+
 }
+
+void RenderCore::initVulkan_createGraphicsPipeline() {
+  VDeleter<VkShaderModule> vertShaderModule{device, vkDestroyShaderModule};
+  VDeleter<VkShaderModule> fragShaderModule{device, vkDestroyShaderModule};
+  createShaderModule(getTriVertShaderCode(), vertShaderModule, "Создание шейдер-модуля tri.vert");
+  createShaderModule(getTriFragShaderCode(), fragShaderModule, "Создание шейдер-модуля tri.frag");
+}
+

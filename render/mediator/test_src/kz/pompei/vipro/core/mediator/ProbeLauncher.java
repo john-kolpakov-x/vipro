@@ -10,6 +10,6 @@ public class ProbeLauncher {
     renderCore.initialize();
     renderCore.mainLoop();
 
-    System.out.println("OK");
+    System.out.println("Exit from program OK");
   }
 }

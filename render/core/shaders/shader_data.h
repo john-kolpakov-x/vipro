@@ -1,13 +1,13 @@
-#ifndef VIPRO_RENDER_CORE_SHADER_DATA_H
-#define VIPRO_RENDER_CORE_SHADER_DATA_H
+#ifndef VIPRO_RENDER_CORE_SHADER_CODE_H
+#define VIPRO_RENDER_CORE_SHADER_CODE_H
 
-typedef struct ShaderData {
+typedef struct ShaderCode {
   unsigned int len;
   const unsigned char *data;
-} ShaderData;
+} ShaderCode;
 
-ShaderData getTriVertShaderData();
+ShaderCode getTriVertShaderCode();
 
-ShaderData getTriFragShaderData();
+ShaderCode getTriFragShaderCode();
 
-#endif //VIPRO_RENDER_CORE_SHADER_DATA_H
+#endif //VIPRO_RENDER_CORE_SHADER_CODE_H
