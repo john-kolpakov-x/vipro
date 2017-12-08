@@ -3,7 +3,9 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <fstream>
 #include "RenderCore.h"
+#include "shaders/shader_data.h"
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -505,3 +507,7 @@ void RenderCore::initVulkan_createImageViews() {
   }
 }
 
+void asd() {
+  getTriFragShaderData();
+  getTriVertShaderData();
+}

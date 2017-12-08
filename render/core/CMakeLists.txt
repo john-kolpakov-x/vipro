@@ -32,5 +32,9 @@ link_libraries(${Vulkan_LIBRARY} ${glfw3_lib} ${glfw3_deps})
 # Sources
 #
 
-set(SOURCE_FILES kz_pompei_vipro_core_mediator_RenderCore.cpp kz_pompei_vipro_core_mediator_RenderCore.h RenderCore.cpp RenderCore.h VDeleter.h use_glfw3.h vk_util.cpp vk_util.h options.h)
+set(CORE_FILES kz_pompei_vipro_core_mediator_RenderCore.cpp kz_pompei_vipro_core_mediator_RenderCore.h)
+set(MODULE_FILES RenderCore.cpp RenderCore.h vk_util.cpp vk_util.h shaders/shader_data.cpp shaders/shader_data.h)
+set(SHADER_FILES shaders/tri.frag.spv.hpp shaders/tri.vert.spv.hpp)
+set(HEAD_FILES VDeleter.h use_glfw3.h options.h)
+set(SOURCE_FILES ${CORE_FILES} ${MODULE_FILES} ${SHADER_FILES} ${HEAD_FILES})
 add_library(vipro_render_core SHARED ${SOURCE_FILES})
