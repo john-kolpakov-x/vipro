@@ -37,6 +37,9 @@ private:
   VkFormat swapChainImageFormat;
   VkExtent2D swapChainExtent;
   std::vector<VDeleter<VkImageView>> swapChainImageViews;
+  VDeleter<VkPipelineLayout> pipelineLayout{device, vkDestroyPipelineLayout};
+  VDeleter<VkRenderPass> renderPass{device, vkDestroyRenderPass};
+  VDeleter<VkPipeline> graphicsPipeline{device, vkDestroyPipeline};
 
   void initWindow();
 
@@ -55,6 +58,10 @@ private:
   void initVulkan_createSwapChain();
 
   void initVulkan_createImageViews();
+
+  void initVulkan_createRenderPass();
+
+  void initVulkan_createGraphicsPipeline();
 
   QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
 
@@ -80,6 +87,6 @@ private:
 
   void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
 
-  void initVulkan_createGraphicsPipeline();
 };
+
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H
