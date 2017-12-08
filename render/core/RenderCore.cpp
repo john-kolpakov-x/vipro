@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <limits>
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -50,12 +51,6 @@ void RenderCore::initWindow() {
   window = glfwCreateWindow(width, height, "Vipro", nullptr, nullptr);
 }
 
-void RenderCore::mainLoop() {
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-  }
-}
-
 void RenderCore::initVulkan() {
   initVulkan_createInstance();
   initVulkan_setupDebugCallback();
@@ -69,6 +64,16 @@ void RenderCore::initVulkan() {
   initVulkan_createFrameBuffers();
   initVulkan_createCommandPool();
   initVulkan_createCommandBuffers();
+  initVulkan_createSemaphores();
+}
+
+void RenderCore::mainLoop() {
+  while (!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
+    drawFrame();
+  }
+
+  vkDeviceWaitIdle(device);
 }
 
 #pragma clang diagnostic push
@@ -375,8 +380,11 @@ void RenderCore::initVulkan_createLogicalDevice() {
   checkResult(result, "Создание логического устройства");
 
   vkGetDeviceQueue(device, queueFamilyIndices.presentIndex(), 0, &presentQueue);
+  vkGetDeviceQueue(device, queueFamilyIndices.graphicsIndex(), 0, &graphicsQueue);
+
 #ifdef TRACE
-  std::cout << "presentQueue = " << presentQueue << std::endl;
+  std::cout << "presentQueue  = " << presentQueue << std::endl;
+  std::cout << "graphicsQueue = " << graphicsQueue << std::endl;
 #endif
 }
 
@@ -550,16 +558,27 @@ void RenderCore::initVulkan_createRenderPass() {
   subPass.colorAttachmentCount = 1;
   subPass.pColorAttachments = &colorAttachmentRef;
 
+  VkSubpassDependency dependency = {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = 1;
   renderPassInfo.pAttachments = &colorAttachment;
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subPass;
+  renderPassInfo.dependencyCount = 1;
+  renderPassInfo.pDependencies = &dependency;
 
   VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, renderPass.replace());
   checkResult(result, "Создание Render Pass");
-
 }
 
 void RenderCore::initVulkan_createGraphicsPipeline() {
@@ -793,6 +812,68 @@ void RenderCore::initVulkan_createCommandBuffers() {
     out << "Формирование командного буфера " << (i + 1) << " из " << commandBuffers.size();
     checkResult(result, out.str());
   }
+}
+
+#pragma clang diagnostic pop
+
+void RenderCore::initVulkan_createSemaphores() {
+  VkSemaphoreCreateInfo semaphoreInfo = {};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkResult result;
+
+  result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, imageAvailableSemaphore.replace());
+  checkResult(result, "Создание семаформа imageAvailableSemaphore");
+
+  result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, renderFinishedSemaphore.replace());
+  checkResult(result, "Создание семаформа renderFinishedSemaphore");
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-stack-address"
+
+void RenderCore::drawFrame() {
+
+  uint32_t imageIndex;
+  vkAcquireNextImageKHR(device, swapChain,
+                        std::numeric_limits<uint64_t>::max(),
+                        imageAvailableSemaphore,
+                        VK_NULL_HANDLE, &imageIndex);
+
+  VkSubmitInfo submitInfo = {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+
+  VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  checkResult(result, ". Запуск очереди");
+
+  VkPresentInfoKHR presentInfo = {};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+
+  VkSwapchainKHR swapChains[] = {swapChain};
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+
+  presentInfo.pImageIndices = &imageIndex;
+
+  presentInfo.pResults = nullptr; // Optional
+
+  vkQueuePresentKHR(presentQueue, &presentInfo);
 }
 
 #pragma clang diagnostic pop

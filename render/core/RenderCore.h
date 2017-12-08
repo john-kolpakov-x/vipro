@@ -31,6 +31,7 @@ private:
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   QueueFamilyIndices queueFamilyIndices;
   VkQueue presentQueue;
+  VkQueue graphicsQueue;
   VDeleter<VkDevice> device{vkDestroyDevice};
   VDeleter<VkSwapchainKHR> swapChain{device, vkDestroySwapchainKHR};
   std::vector<VkImage> swapChainImages;
@@ -43,6 +44,9 @@ private:
   std::vector<VDeleter<VkFramebuffer>> swapChainFrameBuffers;
   VDeleter<VkCommandPool> commandPool{device, vkDestroyCommandPool};
   std::vector<VkCommandBuffer> commandBuffers;
+
+  VDeleter<VkSemaphore> imageAvailableSemaphore{device, vkDestroySemaphore};
+  VDeleter<VkSemaphore> renderFinishedSemaphore{device, vkDestroySemaphore};
 
   void initWindow();
 
@@ -71,6 +75,10 @@ private:
   void initVulkan_createCommandPool();
 
   void initVulkan_createCommandBuffers();
+
+  void initVulkan_createSemaphores();
+
+  void drawFrame();
 
   QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
 

@@ -6,10 +6,13 @@
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
+
 void checkResult(VkResult result, const std::string &placeMessage) {
   if (result == VK_SUCCESS) {
 #ifdef TRACE
-    std::cout << placeMessage << " - OK" << std::endl;
+    if (!placeMessage.empty() && placeMessage[0] != '.') {
+      std::cout << placeMessage << " - OK" << std::endl;
+    }
 #endif
     return;
   }
@@ -17,6 +20,7 @@ void checkResult(VkResult result, const std::string &placeMessage) {
   out << placeMessage << " - ERROR : " << translateVkResult(result);
   throw std::runtime_error(out.str());
 }
+
 #pragma clang diagnostic pop
 
 std::string translateVkResult(VkResult result) {
