@@ -14,7 +14,13 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class CompileShader {
 
-  private static final String BIN = "/home/pompei/soft/VulkanSDK/VulkanSDK/1.0.65.0/x86_64/bin";
+  public static String vulkanSdkDir() {
+    String ret = System.getenv("VULKAN_SDK_DIR");
+    if (ret == null || ret.length() == 0) throw new RuntimeException("No ENV VULKAN_SDK_DIR");
+    return ret;
+  }
+
+  private static final String BIN = vulkanSdkDir() + "/x86_64/bin";
   private static final String EXE = "glslangValidator";
 
   static class Args {
