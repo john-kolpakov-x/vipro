@@ -21,7 +21,7 @@ private:
 public:
   VDeleter() : VDeleter([](T, VkAllocationCallbacks *) {}) {}
 
-  VDeleter(std::function<void(T, VkAllocationCallbacks *)> deleteFunc) {
+  VDeleter(std::function<void(T, VkAllocationCallbacks *)> deleteFunc) { // NOLINT
     this->deleter = [=](T obj) { deleteFunc(obj, nullptr); };
   }
 
@@ -38,7 +38,7 @@ public:
     cleanup();
   }
 
-  const T *operator&() const {
+  const T *operator&() const { // NOLINT
     return &object;
   }
 
@@ -47,11 +47,11 @@ public:
     return &object;
   }
 
-  operator T() const {
+  operator T() const { // NOLINT
     return object;
   }
 
-  void operator=(T rhs) {
+  void operator=(T rhs) { // NOLINT
     cleanup();
     object = rhs;
   }

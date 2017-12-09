@@ -4,6 +4,7 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <chrono>
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -40,15 +41,25 @@ void error_callback(int error, const char *description) {
   throw std::runtime_error(out.str());
 }
 
+static void onWindowChangeSize(GLFWwindow *window, int width, int height) {
+  if (width == 0 || height == 0) return;
+
+  auto a = reinterpret_cast<RenderCore *>(glfwGetWindowUserPointer(window));
+  a->onResize(width, height);
+}
+
 void RenderCore::initWindow() {
   glfwInit();
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
   glfwSetErrorCallback(error_callback);
 
   window = glfwCreateWindow(width, height, "Vipro", nullptr, nullptr);
+
+  glfwSetWindowUserPointer(window, this);
+  glfwSetWindowSizeCallback(window, onWindowChangeSize);
 }
 
 void RenderCore::initVulkan() {
@@ -74,6 +85,17 @@ void RenderCore::mainLoop() {
   }
 
   vkDeviceWaitIdle(device);
+}
+
+void RenderCore::recreateSwapChain() {
+  vkDeviceWaitIdle(device);
+
+  initVulkan_createSwapChain();
+  initVulkan_createImageViews();
+  initVulkan_createRenderPass();
+  initVulkan_createGraphicsPipeline();
+  initVulkan_createFrameBuffers();
+  initVulkan_createCommandBuffers();
 }
 
 #pragma clang diagnostic push
@@ -472,10 +494,15 @@ void RenderCore::initVulkan_createSwapChain() {
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   createInfo.presentMode = presentMode;
   createInfo.clipped = VK_TRUE;
-  createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-  VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, swapChain.replace());
+  VkSwapchainKHR oldSwapChain = swapChain;
+  createInfo.oldSwapchain = oldSwapChain;
+
+  VkSwapchainKHR newSwapChain;
+  VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain);
   checkResult(result, "Создание Swap Chain");
+
+  swapChain = newSwapChain;
 
   vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
   swapChainImages.resize(imageCount);
@@ -768,6 +795,13 @@ void RenderCore::initVulkan_createCommandPool() {
 #pragma clang diagnostic ignored "-Wreturn-stack-address"
 
 void RenderCore::initVulkan_createCommandBuffers() {
+  if (!commandBuffers.empty()) {
+
+    vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+
+  }
+
+
   commandBuffers.resize(swapChainFrameBuffers.size());
 
   VkCommandBufferAllocateInfo allocInfo = {};
@@ -834,11 +868,34 @@ void RenderCore::initVulkan_createSemaphores() {
 
 void RenderCore::drawFrame() {
 
+  static long tickCount = 0;
+  static auto time = std::chrono::high_resolution_clock::now();
+  auto cur_time = std::chrono::high_resolution_clock::now();
+
+  tickCount++;
+
+  long duration = std::chrono::duration_cast<std::chrono::nanoseconds>(cur_time - time).count();
+  if (duration > 4e9) {
+    double seconds = (double) duration / 1e9;
+    double ticksPerSecond = (double) tickCount / seconds;
+    std::cout << "--- FPS " << ticksPerSecond << std::endl;
+    time = cur_time;
+    tickCount = 0;
+  }
+
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(device, swapChain,
-                        std::numeric_limits<uint64_t>::max(),
-                        imageAvailableSemaphore,
-                        VK_NULL_HANDLE, &imageIndex);
+  VkResult result = vkAcquireNextImageKHR(device, swapChain,
+                                          std::numeric_limits<uint64_t>::max(),
+                                          imageAvailableSemaphore,
+                                          VK_NULL_HANDLE, &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    recreateSwapChain();
+    return;
+  }
+  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("Не могу запросить подходящую swap chain image!");
+  }
 
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -856,8 +913,8 @@ void RenderCore::drawFrame() {
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-  VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  checkResult(result, ". Запуск очереди");
+  result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  checkResult(result, ".Запуск очереди graphicsQueue");
 
   VkPresentInfoKHR presentInfo = {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -873,7 +930,21 @@ void RenderCore::drawFrame() {
 
   presentInfo.pResults = nullptr; // Optional
 
-  vkQueuePresentKHR(presentQueue, &presentInfo);
+  result = vkQueuePresentKHR(presentQueue, &presentInfo);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    recreateSwapChain();
+  } else if (result != VK_SUCCESS) {
+    throw std::runtime_error("failed to present swap chain image!");
+  }
 }
 
 #pragma clang diagnostic pop
+
+void RenderCore::onResize(int newWidth, int newHeight) {
+  width = newWidth;
+  height = newHeight;
+#ifdef TRACE
+  std::cout << "RESIZING newWidth = " << newWidth << ", newHeight = " << newHeight << std::endl;
+#endif
+  recreateSwapChain();
+}

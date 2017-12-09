@@ -21,6 +21,8 @@ public:
 
   void mainLoop();
 
+  void onResize(int newWidth, int newHeight);
+
 private:
   int width, height;
 
@@ -79,6 +81,8 @@ private:
   void initVulkan_createSemaphores();
 
   void drawFrame();
+
+  void recreateSwapChain();
 
   QueueFamilyIndices findQueueFamilyIndicesIn(VkPhysicalDevice aPhysicalDevice);
 
