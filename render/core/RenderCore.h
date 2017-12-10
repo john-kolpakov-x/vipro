@@ -45,6 +45,10 @@ private:
   VDeleter<VkPipeline> graphicsPipeline{device, vkDestroyPipeline};
   std::vector<VDeleter<VkFramebuffer>> swapChainFrameBuffers;
   VDeleter<VkCommandPool> commandPool{device, vkDestroyCommandPool};
+
+  VDeleter<VkBuffer> vertexBuffer{device, vkDestroyBuffer};
+  VDeleter<VkDeviceMemory> vertexBufferMemory{device, vkFreeMemory};
+
   std::vector<VkCommandBuffer> commandBuffers;
 
   VDeleter<VkSemaphore> imageAvailableSemaphore{device, vkDestroySemaphore};
@@ -75,6 +79,8 @@ private:
   void initVulkan_createFrameBuffers();
 
   void initVulkan_createCommandPool();
+
+  void initVulkan_createVertexBuffer();
 
   void initVulkan_createCommandBuffers();
 
@@ -107,6 +113,8 @@ private:
   bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
 
   void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
+
+  uint32_t findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

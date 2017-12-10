@@ -1,9 +1,9 @@
 #include "RenderCore.h"
+#include "vertex_data.h"
 #include <sstream>
 #include <iostream>
 #include <cstring>
 #include <fstream>
-#include <limits>
 #include <chrono>
 
 const std::vector<const char *> validationLayers = { // NOLINT
@@ -74,6 +74,7 @@ void RenderCore::initVulkan() {
   initVulkan_createGraphicsPipeline();
   initVulkan_createFrameBuffers();
   initVulkan_createCommandPool();
+  initVulkan_createVertexBuffer();
   initVulkan_createCommandBuffers();
   initVulkan_createSemaphores();
 }
@@ -630,10 +631,12 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+  auto bindingDescription = Vertex::getBindingDescription();
+  vertexInputInfo.vertexBindingDescriptionCount = 1;
+  vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+  auto attributeDescriptions = Vertex::getAttributeDescriptions();
+  vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
+  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
   inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -674,14 +677,14 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
   rasterizer.depthBiasClamp = 0.0f; // Optional
   rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
 
-  VkPipelineMultisampleStateCreateInfo multisampling = {};
-  multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-  multisampling.sampleShadingEnable = VK_FALSE;
-  multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-  multisampling.minSampleShading = 1.0f; // Optional
-  multisampling.pSampleMask = nullptr; /// Optional
-  multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-  multisampling.alphaToOneEnable = VK_FALSE; // Optional
+  VkPipelineMultisampleStateCreateInfo multiSampling = {};
+  multiSampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  multiSampling.sampleShadingEnable = VK_FALSE;
+  multiSampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  multiSampling.minSampleShading = 1.0f; // Optional
+  multiSampling.pSampleMask = nullptr; /// Optional
+  multiSampling.alphaToCoverageEnable = VK_FALSE; // Optional
+  multiSampling.alphaToOneEnable = VK_FALSE; // Optional
 
   VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
   colorBlendAttachment.colorWriteMask = 0
@@ -738,7 +741,7 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
   pipelineInfo.pInputAssemblyState = &inputAssembly;
   pipelineInfo.pViewportState = &viewportState;
   pipelineInfo.pRasterizationState = &rasterizer;
-  pipelineInfo.pMultisampleState = &multisampling;
+  pipelineInfo.pMultisampleState = &multiSampling;
   pipelineInfo.pDepthStencilState = nullptr; // Optional
   pipelineInfo.pColorBlendState = &colorBlending;
   pipelineInfo.pDynamicState = nullptr; // Optional
@@ -796,11 +799,8 @@ void RenderCore::initVulkan_createCommandPool() {
 
 void RenderCore::initVulkan_createCommandBuffers() {
   if (!commandBuffers.empty()) {
-
     vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-
   }
-
 
   commandBuffers.resize(swapChainFrameBuffers.size());
 
@@ -837,7 +837,17 @@ void RenderCore::initVulkan_createCommandBuffers() {
 
     vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-    vkCmdDraw(commandBuffers[i], /*vertexCount*/ 3, 1, /*firstVertex*/0, /*firstInstance*/0);
+    VkBuffer vertexBuffers[] = {vertexBuffer};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+    vkCmdDraw(
+        commandBuffers[i],
+        /*vertexCount*/ static_cast<uint32_t>(getVertices().size()),
+        1,
+        /*firstVertex*/0,
+        /*firstInstance*/0
+    );
 
     vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -947,4 +957,56 @@ void RenderCore::onResize(int newWidth, int newHeight) {
   std::cout << "RESIZING newWidth = " << newWidth << ", newHeight = " << newHeight << std::endl;
 #endif
   recreateSwapChain();
+}
+
+uint32_t RenderCore::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+  VkPhysicalDeviceMemoryProperties memProperties; // NOLINT
+  vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+    if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+      return i;
+    }
+  }
+
+  throw std::runtime_error("failed to find suitable memory type!");
+}
+
+void RenderCore::initVulkan_createVertexBuffer() {
+
+  auto vertices = getVertices();
+
+  VkBufferCreateInfo bufferInfo = {};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+  bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  VkResult result = vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer.replace());
+  checkResult(result, "Создание буфера вершин");
+
+  VkMemoryRequirements memRequirements; // NOLINT
+  vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = findMemoryTypeIndex(memRequirements.memoryTypeBits,
+                                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  result = vkAllocateMemory(device, &allocInfo, nullptr, vertexBufferMemory.replace());
+  checkResult(result, "Выделение памяти для буфера вершин");
+
+  result = vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+  checkResult(result, "Связывание буфера вершин с памятью, выделенной для него");
+
+  void *data;
+  vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+
+  memcpy(data, vertices.data(), (size_t) bufferInfo.size);
+
+  vkUnmapMemory(device, vertexBufferMemory);
+
+
 }
