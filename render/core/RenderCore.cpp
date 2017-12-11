@@ -1,10 +1,14 @@
 #include "RenderCore.h"
-#include "vertex_data.h"
+#include "draw_data.h"
 #include <sstream>
 #include <iostream>
 #include <cstring>
 #include <fstream>
 #include <chrono>
+
+#define GLM_FORCE_RADIANS
+
+#include <glm/gtc/matrix_transform.hpp>
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -71,10 +75,15 @@ void RenderCore::initVulkan() {
   initVulkan_createSwapChain();
   initVulkan_createImageViews();
   initVulkan_createRenderPass();
+  initVulkan_createDescriptorSetLayout();
   initVulkan_createGraphicsPipeline();
   initVulkan_createFrameBuffers();
   initVulkan_createCommandPool();
   initVulkan_createVertexBuffer();
+  initVulkan_createIndexBuffer();
+  initVulkan_createUniformBuffer();
+  initVulkan_createDescriptorPool();
+  initVulkan_createDescriptorSet();
   initVulkan_createCommandBuffers();
   initVulkan_createSemaphores();
 }
@@ -82,6 +91,8 @@ void RenderCore::initVulkan() {
 void RenderCore::mainLoop() {
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
+
+    updateUniformBuffer();
     drawFrame();
   }
 
@@ -670,7 +681,7 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
   rasterizer.lineWidth = 1.0f;
 
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizer.frontFace =  VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   rasterizer.depthBiasEnable = VK_FALSE;
   rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -723,10 +734,12 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
   dynamicState.pDynamicStates = dynamicStates;
   */
 
+  VkDescriptorSetLayout setLayouts[] = {descriptorSetLayout};
+
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 0; // Optional
-  pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+  pipelineLayoutInfo.setLayoutCount = 1; // Optional
+  pipelineLayoutInfo.pSetLayouts = setLayouts; // Optional
   pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
   pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -840,6 +853,9 @@ void RenderCore::initVulkan_createCommandBuffers() {
     VkBuffer vertexBuffers[] = {vertexBuffer};
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+    vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
     vkCmdDraw(
         commandBuffers[i],
@@ -976,37 +992,201 @@ void RenderCore::initVulkan_createVertexBuffer() {
 
   auto vertices = getVertices();
 
+  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+  VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
+  VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+  void* data;
+  vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+  memcpy(data, vertices.data(), (size_t)bufferSize);
+  vkUnmapMemory(device, stagingBufferMemory);
+
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+
+  copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+}
+
+void RenderCore::initVulkan_createIndexBuffer() {
+
+  auto indices = getIndices();
+
+  VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+  VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
+  VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+  void* data;
+  vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+  memcpy(data, indices.data(), (size_t)bufferSize);
+  vkUnmapMemory(device, stagingBufferMemory);
+
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+
+  copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-stack-address"
+
+void RenderCore::initVulkan_createDescriptorSetLayout() {
+  VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+  uboLayoutBinding.binding = 0;
+  uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uboLayoutBinding.descriptorCount = 1;
+  uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+  VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layoutInfo.bindingCount = 1;
+  layoutInfo.pBindings = &uboLayoutBinding;
+
+  VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, descriptorSetLayout.replace());
+  checkResult(result, "Создание DescriptorSetLayout");
+}
+
+void RenderCore::initVulkan_createUniformBuffer() {
+  VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformStagingBuffer, uniformStagingBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uniformBuffer, uniformBufferMemory);
+
+}
+
+void RenderCore::updateUniformBuffer() {
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  auto currentTime = std::chrono::high_resolution_clock::now();
+  float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+
+  UniformBufferObject ubo = {};
+  ubo.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+  ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+  ubo.projection = glm::perspective(glm::radians(45.0f),
+                                    swapChainExtent.width / (float) swapChainExtent.height,
+                                    0.1f, 10.0f);
+
+  ubo.projection[1][1] *= -1;
+
+  void *data;
+  vkMapMemory(device, uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);
+  memcpy(data, &ubo, sizeof(ubo));
+  vkUnmapMemory(device, uniformStagingBufferMemory);
+
+  copyBuffer(uniformStagingBuffer, uniformBuffer, sizeof(ubo));
+}
+
+void RenderCore::initVulkan_createDescriptorPool() {
+  VkDescriptorPoolSize poolSize = {};
+  poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSize.descriptorCount = 1;
+
+  VkDescriptorPoolCreateInfo poolInfo = {};
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.poolSizeCount = 1;
+  poolInfo.pPoolSizes = &poolSize;
+
+  poolInfo.maxSets = 1;
+
+  VkResult result = vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool.replace());
+  checkResult(result, "Создание пула дескрипторов");
+}
+
+void RenderCore::initVulkan_createDescriptorSet() {
+  VkDescriptorSetLayout layouts[] = {descriptorSetLayout};
+  VkDescriptorSetAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = layouts;
+
+  VkResult result = vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
+  checkResult(result, "Создание набора дескрипторов");
+
+  VkDescriptorBufferInfo bufferInfo = {};
+  bufferInfo.buffer = uniformBuffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = sizeof(UniformBufferObject);
+
+  VkWriteDescriptorSet descriptorWrite = {};
+  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite.dstSet = descriptorSet;
+  descriptorWrite.dstBinding = 0;
+  descriptorWrite.dstArrayElement = 0;
+
+  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite.descriptorCount = 1;
+
+  descriptorWrite.pBufferInfo = &bufferInfo;
+  descriptorWrite.pImageInfo = nullptr; // Optional
+  descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+  vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+}
+
+void RenderCore::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+                              VDeleter<VkBuffer> &buffer, VDeleter<VkDeviceMemory> &bufferMemory) {
+
   VkBufferCreateInfo bufferInfo = {};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  bufferInfo.size = sizeof(vertices[0]) * vertices.size();
-  bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  bufferInfo.size = size;
+  bufferInfo.usage = usage;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  VkResult result = vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer.replace());
-  checkResult(result, "Создание буфера вершин");
+  if (vkCreateBuffer(device, &bufferInfo, nullptr, buffer.replace()) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create buffer!");
+  }
 
   VkMemoryRequirements memRequirements; // NOLINT
-  vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
+  vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
 
   VkMemoryAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex = findMemoryTypeIndex(memRequirements.memoryTypeBits,
-                                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  allocInfo.memoryTypeIndex = findMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
 
-  result = vkAllocateMemory(device, &allocInfo, nullptr, vertexBufferMemory.replace());
-  checkResult(result, "Выделение памяти для буфера вершин");
+  if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory.replace()) != VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate buffer memory!");
+  }
 
-  result = vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
-  checkResult(result, "Связывание буфера вершин с памятью, выделенной для него");
+  vkBindBufferMemory(device, buffer, bufferMemory, 0);
 
-  void *data;
-  vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+}
 
-  memcpy(data, vertices.data(), (size_t) bufferInfo.size);
+void RenderCore::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+  VkCommandBufferAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = commandPool;
+  allocInfo.commandBufferCount = 1;
 
-  vkUnmapMemory(device, vertexBufferMemory);
+  VkCommandBuffer commandBuffer;
+  vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
 
+  VkCommandBufferBeginInfo beginInfo = {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+  VkBufferCopy copyRegion = {};
+  copyRegion.size = size;
+  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+  vkEndCommandBuffer(commandBuffer);
+
+  VkSubmitInfo submitInfo = {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(graphicsQueue);
+
+  vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }

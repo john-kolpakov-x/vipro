@@ -36,5 +36,5 @@ set(CORE_FILES kz_pompei_vipro_core_mediator_RenderCore.cpp kz_pompei_vipro_core
 set(MODULE_FILES RenderCore.cpp RenderCore.h vk_util.cpp vk_util.h shaders/shader_data.cpp shaders/shader_data.h)
 set(SHADER_FILES shaders/tri.frag.spv.hpp shaders/tri.vert.spv.hpp)
 set(HEAD_FILES VDeleter.h use_glfw3.h options.h)
-set(SOURCE_FILES ${CORE_FILES} ${MODULE_FILES} ${SHADER_FILES} ${HEAD_FILES} vertex_data.cpp vertex_data.h)
+set(SOURCE_FILES ${CORE_FILES} ${MODULE_FILES} ${SHADER_FILES} ${HEAD_FILES} draw_data.cpp draw_data.h)
 add_library(vipro_render_core SHARED ${SOURCE_FILES})

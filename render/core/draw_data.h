@@ -1,5 +1,5 @@
-#ifndef VIPRO_RENDER_CORE_VERTEX_DATA_H_H
-#define VIPRO_RENDER_CORE_VERTEX_DATA_H_H
+#ifndef VIPRO_RENDER_CORE_DRAW_DATA_H
+#define VIPRO_RENDER_CORE_DRAW_DATA_H
 
 #include "use_glfw3.h"
 #include <glm/glm.hpp>
@@ -40,4 +40,12 @@ struct Vertex {
 
 std::vector<Vertex> getVertices();
 
-#endif //VIPRO_RENDER_CORE_VERTEX_DATA_H_H
+std::vector<uint16_t> getIndices();
+
+struct UniformBufferObject {
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 projection;
+};
+
+#endif //VIPRO_RENDER_CORE_DRAW_DATA_H

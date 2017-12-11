@@ -40,6 +40,7 @@ private:
   VkFormat swapChainImageFormat;
   VkExtent2D swapChainExtent;
   std::vector<VDeleter<VkImageView>> swapChainImageViews;
+  VDeleter<VkDescriptorSetLayout> descriptorSetLayout{device, vkDestroyDescriptorSetLayout};
   VDeleter<VkPipelineLayout> pipelineLayout{device, vkDestroyPipelineLayout};
   VDeleter<VkRenderPass> renderPass{device, vkDestroyRenderPass};
   VDeleter<VkPipeline> graphicsPipeline{device, vkDestroyPipeline};
@@ -48,6 +49,16 @@ private:
 
   VDeleter<VkBuffer> vertexBuffer{device, vkDestroyBuffer};
   VDeleter<VkDeviceMemory> vertexBufferMemory{device, vkFreeMemory};
+
+  VDeleter<VkBuffer> indexBuffer{device, vkDestroyBuffer};
+  VDeleter<VkDeviceMemory> indexBufferMemory{device, vkFreeMemory};
+
+  VDeleter<VkBuffer> uniformStagingBuffer{device, vkDestroyBuffer};
+  VDeleter<VkDeviceMemory> uniformStagingBufferMemory{device, vkFreeMemory};
+  VDeleter<VkBuffer> uniformBuffer{device, vkDestroyBuffer};
+  VDeleter<VkDeviceMemory> uniformBufferMemory{device, vkFreeMemory};
+  VDeleter<VkDescriptorPool> descriptorPool{device, vkDestroyDescriptorPool};
+  VkDescriptorSet descriptorSet;
 
   std::vector<VkCommandBuffer> commandBuffers;
 
@@ -86,6 +97,18 @@ private:
 
   void initVulkan_createSemaphores();
 
+  void initVulkan_createDescriptorSetLayout();
+
+  void initVulkan_createIndexBuffer();
+
+  void initVulkan_createUniformBuffer();
+
+  void initVulkan_createDescriptorPool();
+
+  void initVulkan_createDescriptorSet();
+
+  void updateUniformBuffer();
+
   void drawFrame();
 
   void recreateSwapChain();
@@ -115,6 +138,12 @@ private:
   void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
 
   uint32_t findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+  void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+                    VDeleter<VkBuffer> &buffer, VDeleter<VkDeviceMemory> &bufferMemory);
+
+  void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H
