@@ -57,6 +57,7 @@ private:
   VDeleter<VkDeviceMemory> uniformStagingBufferMemory{device, vkFreeMemory};
   VDeleter<VkBuffer> uniformBuffer{device, vkDestroyBuffer};
   VDeleter<VkDeviceMemory> uniformBufferMemory{device, vkFreeMemory};
+
   VDeleter<VkDescriptorPool> descriptorPool{device, vkDestroyDescriptorPool};
   VkDescriptorSet descriptorSet;
 

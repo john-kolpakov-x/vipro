@@ -6,9 +6,7 @@
 #include <fstream>
 #include <chrono>
 
-#define GLM_FORCE_RADIANS
-
-#include <glm/gtc/matrix_transform.hpp>
+#include "use_glm.h"
 
 const std::vector<const char *> validationLayers = { // NOLINT
     "VK_LAYER_LUNARG_standard_validation"
@@ -681,7 +679,7 @@ void RenderCore::initVulkan_createGraphicsPipeline() {
   rasterizer.lineWidth = 1.0f;
 
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace =  VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   rasterizer.depthBiasEnable = VK_FALSE;
   rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -852,18 +850,28 @@ void RenderCore::initVulkan_createCommandBuffers() {
 
     VkBuffer vertexBuffers[] = {vertexBuffer};
     VkDeviceSize offsets[] = {0};
+
     vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
     vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-    vkCmdDraw(
-        commandBuffers[i],
-        /*vertexCount*/ static_cast<uint32_t>(getVertices().size()),
-        1,
-        /*firstVertex*/0,
+    vkCmdDrawIndexed(commandBuffers[i],
+        /*indexCount*/static_cast<uint32_t>(getIndices().size()),
+        /*instanceCount*/1,
+        /*firstIndex*/0,
+        /*vertexOffset*/0,
         /*firstInstance*/0
     );
+
+//    vkCmdDraw(
+//        commandBuffers[i],
+//        /*vertexCount*/ static_cast<uint32_t>(getVertices().size()),
+//        1,
+//        /*firstVertex*/0,
+//        /*firstInstance*/0
+//    );
 
     vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -994,16 +1002,22 @@ void RenderCore::initVulkan_createVertexBuffer() {
 
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-  VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
-  VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+  VDeleter<VkBuffer> stagingBuffer{device, vkDestroyBuffer};
+  VDeleter<VkDeviceMemory> stagingBufferMemory{device, vkFreeMemory};
+  createBuffer(bufferSize,
+               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               stagingBuffer, stagingBufferMemory);
 
-  void* data;
+  void *data;
   vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-  memcpy(data, vertices.data(), (size_t)bufferSize);
+  memcpy(data, vertices.data(), (size_t) bufferSize);
   vkUnmapMemory(device, stagingBufferMemory);
 
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+  createBuffer(bufferSize,
+               VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+               vertexBuffer, vertexBufferMemory);
 
   copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 }
@@ -1014,16 +1028,22 @@ void RenderCore::initVulkan_createIndexBuffer() {
 
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-  VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
-  VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+  VDeleter<VkBuffer> stagingBuffer{device, vkDestroyBuffer};
+  VDeleter<VkDeviceMemory> stagingBufferMemory{device, vkFreeMemory};
+  createBuffer(bufferSize,
+               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               stagingBuffer, stagingBufferMemory);
 
-  void* data;
+  void *data;
   vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-  memcpy(data, indices.data(), (size_t)bufferSize);
+  memcpy(data, indices.data(), (size_t) bufferSize);
   vkUnmapMemory(device, stagingBufferMemory);
 
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+  createBuffer(bufferSize,
+               VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+               indexBuffer, indexBufferMemory);
 
   copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 }
@@ -1051,8 +1071,11 @@ void RenderCore::initVulkan_createDescriptorSetLayout() {
 void RenderCore::initVulkan_createUniformBuffer() {
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformStagingBuffer, uniformStagingBufferMemory);
-  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uniformBuffer, uniformBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformStagingBuffer,
+               uniformStagingBufferMemory);
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uniformBuffer, uniformBufferMemory);
 
 }
 
@@ -1154,7 +1177,9 @@ void RenderCore::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMem
     throw std::runtime_error("failed to allocate buffer memory!");
   }
 
-  vkBindBufferMemory(device, buffer, bufferMemory, 0);
+  if (vkBindBufferMemory(device, buffer, bufferMemory, 0) != VK_SUCCESS) {
+    throw std::runtime_error("failed to bind buffer with memory!");
+  }
 
 }
 
