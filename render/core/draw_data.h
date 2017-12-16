@@ -15,7 +15,6 @@ struct Vertex {
     bindingDescription.binding = 0;
     bindingDescription.stride = sizeof(Vertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
     return bindingDescription;
   }
 
@@ -34,17 +33,21 @@ struct Vertex {
 
     return attributeDescriptions;
   }
-
 };
 
 std::vector<Vertex> getVertices();
 
 std::vector<uint16_t> getIndices();
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 struct UniformBufferObject {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 projection;
 };
+
+#pragma clang diagnostic pop
 
 #endif //VIPRO_RENDER_CORE_DRAW_DATA_H
