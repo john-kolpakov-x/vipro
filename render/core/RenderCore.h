@@ -47,6 +47,10 @@ private:
   std::vector<VDeleter<VkFramebuffer>> swapChainFrameBuffers;
   VDeleter<VkCommandPool> commandPool{device, vkDestroyCommandPool};
 
+  VDeleter<VkImage> depthImage{device, vkDestroyImage};
+  VDeleter<VkDeviceMemory> depthImageMemory{device, vkFreeMemory};
+  VDeleter<VkImageView> depthImageView{device, vkDestroyImageView};
+
   VDeleter<VkBuffer> vertexBuffer{device, vkDestroyBuffer};
   VDeleter<VkDeviceMemory> vertexBufferMemory{device, vkFreeMemory};
 
@@ -91,6 +95,8 @@ private:
   void initVulkan_createFrameBuffers();
 
   void initVulkan_createCommandPool();
+
+  void initVulkan_createDepthResources();
 
   void initVulkan_createVertexBuffer();
 
@@ -145,6 +151,22 @@ private:
 
   void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
+  VkFormat
+  findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
+  VkFormat findDepthFormat();
+
+  void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+                   VkMemoryPropertyFlags properties, VDeleter<VkImage> &image, VDeleter<VkDeviceMemory> &imageMemory);
+
+  void
+  createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VDeleter<VkImageView> &imageView);
+
+  void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+  VkCommandBuffer beginSingleTimeCommands();
+
+  void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

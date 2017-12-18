@@ -8,7 +8,7 @@ compileJava.options.compilerArgs.addAll(['-h', "${buildDir}/c_headers"])
 
 task copyCHeaders(type: Copy) {
   dependsOn compileJava
-  group "build"
+  group "scripts"
   from("${buildDir}/c_headers") {
     include '*.h'
   }
@@ -43,7 +43,7 @@ task compileTriVert(type: JavaExec) {
 }
 
 task compileAllShaders {
-  group "build"
+  group "scripts"
   dependsOn compileTriFrag
   dependsOn compileTriVert
 }

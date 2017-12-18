@@ -2,6 +2,8 @@
 #include <jni.h>
 /* Header for class kz_pompei_vipro_core_mediator_RenderCore */
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #ifndef _Included_kz_pompei_vipro_core_mediator_RenderCore
 #define _Included_kz_pompei_vipro_core_mediator_RenderCore
 #ifdef __cplusplus
@@ -13,7 +15,7 @@ extern "C" {
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_init0
-  (JNIEnv *, jclass);
+    (JNIEnv *, jclass);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -21,7 +23,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_init0
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initReference
-  (JNIEnv *, jobject);
+    (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -29,7 +31,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initReferen
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
-  (JNIEnv *, jobject);
+    (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -37,7 +39,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_mainLoop
-  (JNIEnv *, jobject);
+    (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -45,7 +47,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_mainLoop
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_destroyReference
-  (JNIEnv *, jobject);
+    (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -53,9 +55,11 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_destroyRefe
  * Signature: ([I)V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_putSize
-  (JNIEnv *, jobject, jintArray);
+    (JNIEnv *, jobject, jintArray);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+
+#pragma clang diagnostic pop

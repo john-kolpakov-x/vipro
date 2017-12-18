@@ -694,3 +694,7 @@ std::string VkExtent2D_to_str(const VkExtent2D &value) {
   out << "VkExtent2D{width=" << value.width << ", height=" << value.height << "}";
   return out.str();
 }
+
+bool hasStencilComponent(VkFormat format) {
+  return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}

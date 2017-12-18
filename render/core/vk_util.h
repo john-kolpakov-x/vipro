@@ -81,4 +81,6 @@ VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &avai
 
 VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, int width, int height);
 
+bool hasStencilComponent(VkFormat format);
+
 #endif //VIPRO_RENDER_CORE_VK_UTIL_H
