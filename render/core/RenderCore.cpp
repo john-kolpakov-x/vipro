@@ -105,6 +105,7 @@ void RenderCore::recreateSwapChain() {
   initVulkan_createImageViews();
   initVulkan_createRenderPass();
   initVulkan_createGraphicsPipeline();
+  initVulkan_createDepthResources();
   initVulkan_createFrameBuffers();
   initVulkan_createCommandBuffers();
 }
