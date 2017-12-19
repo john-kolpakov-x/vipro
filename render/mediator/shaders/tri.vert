@@ -17,7 +17,14 @@ out gl_PerVertex {
 };
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+//    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
 //    gl_Position = vec4(inPosition, 1.0);
-    fragColor = inColor;
+
+    if (2 <= inColor.r && inColor.r <= 3) {
+      gl_Position = vec4(inPosition, 1.0);
+      fragColor = inColor - 2;
+    } else {
+      gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+      fragColor = inColor;
+    }
 }
