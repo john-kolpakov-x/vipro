@@ -417,8 +417,8 @@ void RenderCore::initVulkan_createLogicalDevice() {
   vkGetDeviceQueue(device, queueFamilyIndices.graphicsIndex(), 0, &graphicsQueue);
 
 #ifdef TRACE
-  std::cout << "presentQueue  = " << presentQueue << std::endl;
-  std::cout << "graphicsQueue = " << graphicsQueue << std::endl;
+  std::cout << "presentQueue  = " << presentQueue << ", index = " << queueFamilyIndices.presentIndex() << std::endl;
+  std::cout << "graphicsQueue = " << graphicsQueue << ", index = " << queueFamilyIndices.graphicsIndex() << std::endl;
 #endif
 }
 
@@ -507,14 +507,16 @@ void RenderCore::initVulkan_createSwapChain() {
   createInfo.presentMode = presentMode;
   createInfo.clipped = VK_TRUE;
 
-  VkSwapchainKHR oldSwapChain = swapChain;
-  createInfo.oldSwapchain = oldSwapChain;
+  {
+    VkSwapchainKHR oldSwapChain = swapChain;
+    createInfo.oldSwapchain = oldSwapChain;
 
-  VkSwapchainKHR newSwapChain;
-  VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain);
-  checkResult(result, "Создание Swap Chain");
+    VkSwapchainKHR newSwapChain;
+    VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain);
+    checkResult(result, "Создание Swap Chain");
 
-  swapChain = newSwapChain;
+    swapChain = newSwapChain;
+  }
 
   vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
   swapChainImages.resize(imageCount);
@@ -523,8 +525,10 @@ void RenderCore::initVulkan_createSwapChain() {
   swapChainImageFormat = surfaceFormat.format;
   swapChainExtent = extent;
 #ifdef TRACE
-  std::cout << "swapChainImageFormat = " << surfaceFormatName(swapChainImageFormat) << std::endl;
-  std::cout << "swapChainExtent      = " << VkExtent2D_to_str(swapChainExtent) << std::endl;
+  std::cout << "Swap Chain:" << std::endl;
+  std::cout << "    Image format = " << surfaceFormatName(swapChainImageFormat) << std::endl;
+  std::cout << "    Extent       = " << VkExtent2D_to_str(swapChainExtent) << std::endl;
+  std::cout << "    Image count  = " << swapChainImages.size() << std::endl;
 #endif
 }
 
@@ -853,13 +857,15 @@ void RenderCore::initVulkan_createCommandBuffers() {
   VkResult result = vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data());
   checkResult(result, "Выделение CommandBuffers");
 
-  for (size_t i = 0; i < commandBuffers.size(); i++) {
+  for (size_t i = 0, n = commandBuffers.size(); i < n; i++) {
+    auto commandBuffer = commandBuffers[i];
+
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     beginInfo.pInheritanceInfo = nullptr; // Optional
 
-    vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
     std::array<VkClearValue, 2> clearValues = {};
     clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -876,9 +882,9 @@ void RenderCore::initVulkan_createCommandBuffers() {
     renderPassInfo.clearValueCount = clearValues.size();
     renderPassInfo.pClearValues = clearValues.data();
 
-    vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
     VkBuffer vertexBuffers[] = {vertexBuffer};
     VkDeviceSize offsets[] = {0};
@@ -950,10 +956,16 @@ void RenderCore::drawFrame() {
   }
 
   uint32_t imageIndex;
-  VkResult result = vkAcquireNextImageKHR(device, swapChain,
-                                          std::numeric_limits<uint64_t>::max(),
-                                          imageAvailableSemaphore,
-                                          VK_NULL_HANDLE, &imageIndex);
+
+  ////
+  ////
+  ////
+  VkResult result = vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
+                                          imageAvailableSemaphore, VK_NULL_HANDLE,
+                                          &imageIndex);
+  ////
+  ////
+  ////
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     recreateSwapChain();
@@ -979,8 +991,13 @@ void RenderCore::drawFrame() {
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
+  //
+  //
   result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  checkResult(result, ".Запуск очереди graphicsQueue");
+  //
+  //
+
+  checkResult(result, ".Запуск буфера команд для прорисовки в очереди graphicsQueue");
 
   VkPresentInfoKHR presentInfo = {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -996,7 +1013,12 @@ void RenderCore::drawFrame() {
 
   presentInfo.pResults = nullptr; // Optional
 
+  //
+  //
   result = vkQueuePresentKHR(presentQueue, &presentInfo);
+  //
+  //
+
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     recreateSwapChain();
   } else if (result != VK_SUCCESS) {
@@ -1118,7 +1140,7 @@ void RenderCore::updateUniformBuffer() {
   float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
   UniformBufferObject ubo = {};
-  ubo.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.model = glm::rotate(glm::mat4(), time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
   ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -1242,17 +1264,20 @@ void RenderCore::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
 
-  vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(graphicsQueue);
+  VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  checkResult(result, ". vkQueueSubmit graphicsQueue copying");
+  result = vkQueueWaitIdle(graphicsQueue);
+  checkResult(result, ". vkQueueWaitIdle graphicsQueue of copying");
 
   vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
 VkFormat
-RenderCore::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+RenderCore::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
+                                VkFormatFeatureFlags features) {
 
   for (VkFormat format : candidates) {
-    VkFormatProperties props;
+    VkFormatProperties props; // NOLINT
     vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
 
     if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
@@ -1307,7 +1332,8 @@ void RenderCore::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
   vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+void
+RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   VkImageMemoryBarrier barrier = {};
@@ -1339,7 +1365,8 @@ void RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLa
   } else if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
     barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-  } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+  } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+             newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
   } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
@@ -1362,8 +1389,8 @@ void RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLa
 }
 
 void RenderCore::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
-                 VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                 VDeleter<VkImage>& image, VDeleter<VkDeviceMemory>& imageMemory) {
+                             VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+                             VDeleter<VkImage> &image, VDeleter<VkDeviceMemory> &imageMemory) {
   VkImageCreateInfo imageInfo = {};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -1398,7 +1425,8 @@ void RenderCore::createImage(uint32_t width, uint32_t height, VkFormat format, V
   vkBindImageMemory(device, image, imageMemory, 0);
 }
 
-void RenderCore::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VDeleter<VkImageView>& imageView) {
+void RenderCore::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags,
+                                 VDeleter<VkImageView> &imageView) {
   VkImageViewCreateInfo viewInfo = {};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = image;
