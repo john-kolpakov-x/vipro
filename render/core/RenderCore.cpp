@@ -1140,7 +1140,7 @@ void RenderCore::updateUniformBuffer() {
   float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
   UniformBufferObject ubo = {};
-  ubo.model = glm::rotate(glm::mat4(), time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
   ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -1148,7 +1148,11 @@ void RenderCore::updateUniformBuffer() {
                                     swapChainExtent.width / (float) swapChainExtent.height,
                                     0.1f, 10.0f);
 
+  ubo.projection2 = glm::mat4();
+
   ubo.projection[1][1] *= -1;
+  ubo.projection2[1][1] *= -1;
+
 
   void *data;
   vkMapMemory(device, uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);
