@@ -1,47 +1,75 @@
 #include "draw_data.h"
 
-std::vector<Vertex> getVertices() {
-
-  const std::vector<Vertex> vertices = {
-      {{-0.5f,  -0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}},
-      {{+0.5f,  -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}},
-      {{+0.5f,  +0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}},
-      {{-0.5f,  +0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}},
-
-      {{-0.25f, -0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},//04
-      {{+0.25f, -0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},//05
-      {{+0.25f, +0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},//06
-      {{-0.25f, +0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},//07
-      {{-0.25f, -0.25f, 0.6f}, {1.0f, 0.0f, 0.0f}},//08
-      {{+0.25f, -0.25f, 0.6f}, {0.0f, 1.0f, 0.0f}},//09
-      {{+0.25f, +0.25f, 0.6f}, {0.0f, 0.0f, 1.0f}},//10
-      {{-0.25f, +0.25f, 0.6f}, {0.0f, 1.0f, 1.0f}},//11
-
-      {{+0.80f, +0.80f, +0.8f}, {0.0f+2, 0.5f+2, 1.0f+2}},//12
-      {{+0.85f, +0.80f, +0.8f}, {0.0f+2, 0.5f+2, 1.0f+2}},//13
-      {{+0.85f, +0.85f, +0.8f}, {0.0f+2, 0.7f+2, 0.0f+2}},//14
-      {{+0.80f, +0.85f, +0.8f}, {0.0f+2, 1.0f+2, 1.0f+2}},//15
-
+static Figure getPlane() {
+  Figure ret = {};
+  ret.vertices = {
+      {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+      {{+0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+      {{+0.5f, +0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+      {{-0.5f, +0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
   };
+  ret.indices = {0, 2, 3, 0, 1, 2,};
 
-  return vertices;
+  return ret;
 }
 
-std::vector<uint32_t> getIndices() {
-  const std::vector<uint32_t> indices = {
-
-
+static Figure getCube() {
+  Figure ret = {};
+  ret.vertices = {
+      {{-0.25f, -0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},
+      {{+0.25f, -0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},
+      {{+0.25f, +0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},
+      {{-0.25f, +0.25f, 0.1f}, {1.0f, 1.0f, 1.0f}},
+      {{-0.25f, -0.25f, 0.6f}, {1.0f, 0.0f, 0.0f}},
+      {{+0.25f, -0.25f, 0.6f}, {0.0f, 1.0f, 0.0f}},
+      {{+0.25f, +0.25f, 0.6f}, {0.0f, 0.0f, 1.0f}},
+      {{-0.25f, +0.25f, 0.6f}, {0.0f, 1.0f, 1.0f}},
+  };
+  ret.indices = {
+      0, 1, 3, 1, 2, 3,
       4, 5, 7, 5, 6, 7,
-      8, 9, 11, 9, 10, 11,
-      4, 5, 9, 4, 9, 8,
-      5, 10, 9, 5, 6, 10,
-      6, 11, 10, 6, 7, 11,
-      7, 8, 11, 7, 4, 8,
-
-      0, 2, 3, 0, 1, 2,
-
-      13,12,14,14,12,15,
+      0, 1, 5, 0, 5, 4,
+      1, 6, 5, 1, 2, 6,
+      2, 7, 6, 2, 3, 7,
+      3, 4, 7, 3, 1, 4,
   };
 
-  return indices;
+  return ret;
+}
+
+static Figure getRect() {
+  Figure ret = {};
+  ret.vertices = {
+      {{+0.80f, +0.80f, +0.8f}, {0.0f, 0.5f, 1.0f}},
+      {{+0.85f, +0.80f, +0.8f}, {0.0f, 0.5f, 1.0f}},
+      {{+0.85f, +0.85f, +0.8f}, {0.0f, 0.7f, 0.0f}},
+      {{+0.80f, +0.85f, +0.8f}, {0.0f, 1.0f, 1.0f}},
+  };
+  ret.indices = {1, 0, 2, 2, 0, 3,};
+
+  return ret;
+}
+
+Figure getTotalFigure() {
+  Figure ret = {};
+  ret.append(getCube());
+  ret.append(getPlane());
+  ret.append(getRect(), +2);
+  return ret;
+}
+
+void Figure::append(Figure figure, float colorOffset) {
+  auto indexOffset = (uint32_t) vertices.size();
+
+  for (auto &ref : figure.vertices) {
+    Vertex v = ref;
+    v.color.r += colorOffset;
+    v.color.g += colorOffset;
+    v.color.b += colorOffset;
+    vertices.push_back(v);
+  }
+
+  for (auto index : figure.indices) {
+    indices.push_back(index + indexOffset);
+  }
 }

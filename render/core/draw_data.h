@@ -35,10 +35,6 @@ struct Vertex {
   }
 };
 
-std::vector<Vertex> getVertices();
-
-std::vector<uint32_t> getIndices();
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
@@ -49,5 +45,14 @@ struct UniformBufferObject {
 };
 
 #pragma clang diagnostic pop
+
+struct Figure {
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+
+  void append(Figure figure, float colorOffset = 0.0f);
+};
+
+Figure getTotalFigure();
 
 #endif //VIPRO_RENDER_CORE_DRAW_DATA_H

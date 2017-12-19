@@ -896,7 +896,7 @@ void RenderCore::initVulkan_createCommandBuffers() {
                             pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
     vkCmdDrawIndexed(commandBuffers[i],
-        /*indexCount*/static_cast<uint32_t>(getIndices().size()),
+        /*indexCount*/static_cast<uint32_t>(getTotalFigure().indices.size()),
         /*instanceCount*/1,
         /*firstIndex*/0,
         /*vertexOffset*/0,
@@ -1052,7 +1052,7 @@ uint32_t RenderCore::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFl
 
 void RenderCore::initVulkan_createVertexBuffer() {
 
-  auto vertices = getVertices();
+  auto vertices = getTotalFigure().vertices;
 
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -1078,7 +1078,7 @@ void RenderCore::initVulkan_createVertexBuffer() {
 
 void RenderCore::initVulkan_createIndexBuffer() {
 
-  auto indices = getIndices();
+  auto indices = getTotalFigure().indices;
 
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
