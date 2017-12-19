@@ -37,7 +37,7 @@ struct Vertex {
 
 std::vector<Vertex> getVertices();
 
-std::vector<uint16_t> getIndices();
+std::vector<uint32_t> getIndices();
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
