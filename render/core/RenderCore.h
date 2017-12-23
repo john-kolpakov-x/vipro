@@ -6,6 +6,7 @@
 #include "VDeleter.h"
 #include "vk_util.h"
 #include "options.h"
+#include "ImageData.h"
 
 class RenderCore {
 public:
@@ -22,6 +23,8 @@ public:
   void mainLoop();
 
   void onResize(int newWidth, int newHeight);
+
+  ImageData textureImageData;
 
 private:
   int width, height;
@@ -167,6 +170,8 @@ private:
   VkCommandBuffer beginSingleTimeCommands();
 
   void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+  void initVulkan_createTextureImage();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

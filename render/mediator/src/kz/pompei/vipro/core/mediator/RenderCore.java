@@ -30,6 +30,8 @@ public class RenderCore implements AutoCloseable {
 
   private native void putSize(int sizePlace[]);
 
+  public native void putTextureImageData(int imageWidth, int imageHeight, byte[] pixelsR8G8B8A8);
+
   @SuppressWarnings("unused")
   private void throwMessage(String message) {
     throw new RuntimeException(message);

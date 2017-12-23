@@ -15,7 +15,7 @@ extern "C" {
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_init0
-    (JNIEnv *, jclass);
+  (JNIEnv *, jclass);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -23,7 +23,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_init0
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initReference
-    (JNIEnv *, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -31,7 +31,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initReferen
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
-    (JNIEnv *, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -39,7 +39,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_initialize
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_mainLoop
-    (JNIEnv *, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -47,7 +47,7 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_mainLoop
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_destroyReference
-    (JNIEnv *, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     kz_pompei_vipro_core_mediator_RenderCore
@@ -55,7 +55,15 @@ JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_destroyRefe
  * Signature: ([I)V
  */
 JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_putSize
-    (JNIEnv *, jobject, jintArray);
+  (JNIEnv *, jobject, jintArray);
+
+/*
+ * Class:     kz_pompei_vipro_core_mediator_RenderCore
+ * Method:    putTextureImageData
+ * Signature: (II[B)V
+ */
+JNIEXPORT void JNICALL Java_kz_pompei_vipro_core_mediator_RenderCore_putTextureImageData
+  (JNIEnv *, jobject, jint, jint, jbyteArray);
 
 #ifdef __cplusplus
 }
