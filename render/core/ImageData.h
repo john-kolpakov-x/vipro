@@ -6,12 +6,12 @@ private:
   int _width, _height;
   void *_data;
 
-  void clean();
-
 public:
   ImageData() : _width(0), _height(0), _data(nullptr) {}
 
   ~ImageData() { clean(); }
+
+  void clean();
 
   void reallocate(int width, int height);
 

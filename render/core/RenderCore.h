@@ -50,6 +50,12 @@ private:
   std::vector<VDeleter<VkFramebuffer>> swapChainFrameBuffers;
   VDeleter<VkCommandPool> commandPool{device, vkDestroyCommandPool};
 
+  VDeleter<VkImage> textureImage{device, vkDestroyImage};
+  VDeleter<VkDeviceMemory> textureImageMemory{device, vkFreeMemory};
+  VDeleter<VkImageView> textureImageView{device, vkDestroyImageView};
+  VDeleter<VkSampler> textureSampler{device, vkDestroySampler};
+
+
   VDeleter<VkImage> depthImage{device, vkDestroyImage};
   VDeleter<VkDeviceMemory> depthImageMemory{device, vkFreeMemory};
   VDeleter<VkImageView> depthImageView{device, vkDestroyImageView};
@@ -147,6 +153,8 @@ private:
 
   void createShaderModule(ShaderCode shaderCode, VDeleter<VkShaderModule> &shaderModule, const std::string &name);
 
+  void searchMemoryTypeIndex(bool *found, uint32_t *index, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
   uint32_t findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
   void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
@@ -172,6 +180,8 @@ private:
   void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
   void initVulkan_createTextureImage();
+
+  void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H

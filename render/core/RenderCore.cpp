@@ -255,14 +255,15 @@ void RenderCore::initVulkan_setupDebugCallback() {
 bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj,
                                size_t location, int32_t code, const char *layerPrefix, const char *msg) {
 
+  //TODO debug call back
   std::cerr << "Validation layer: " << msg << std::endl;
-  std::cerr << "    flags: " << flags << std::endl;
-  std::cerr << "    objType: " << objType << std::endl;
-  std::cerr << "    obj: " << obj << std::endl;
-  std::cerr << "    location: " << location << std::endl;
-  std::cerr << "    code: " << code << std::endl;
-  std::cerr << "    layerPrefix: " << layerPrefix << std::endl;
-  std::cerr << std::endl;
+//  std::cerr << "    flags: " << flags << std::endl;
+//  std::cerr << "    objType: " << objType << std::endl;
+//  std::cerr << "    obj: " << obj << std::endl;
+//  std::cerr << "    location: " << location << std::endl;
+//  std::cerr << "    code: " << code << std::endl;
+//  std::cerr << "    layerPrefix: " << layerPrefix << std::endl;
+//  std::cerr << std::endl;
 
   return false;
 }
@@ -1038,7 +1039,10 @@ void RenderCore::onResize(int newWidth, int newHeight) {
   recreateSwapChain();
 }
 
-uint32_t RenderCore::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+void RenderCore::searchMemoryTypeIndex(bool *found, uint32_t *index,
+                                       uint32_t typeFilter,
+                                       VkMemoryPropertyFlags properties) {
+
   VkPhysicalDeviceMemoryProperties memProperties; // NOLINT
   vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
@@ -1070,17 +1074,32 @@ uint32_t RenderCore::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFl
       }
       std::cout << std::endl;
     }
+
   }
 #endif
 
   for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
     if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+
 #ifdef TRACE
-      std::cout << "-----------------------------------------------     findMemoryTypeIndex returns " << i << std::endl;
+      std::cout << "------------- searchMemoryTypeIndex returns " << i << std::endl;
 #endif
-      return i;
+
+      *index = i;
+      *found = true;
+      return;
     }
   }
+
+  *found = false;
+}
+
+uint32_t RenderCore::findMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+
+  uint32_t index;
+  bool found;
+  searchMemoryTypeIndex(&found, &index, typeFilter, properties);
+  if (found) return index;
 
   throw std::runtime_error("findMemoryTypeIndex: Не могу найти подходящий тип памяти");
 }
@@ -1430,6 +1449,7 @@ RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout 
 void RenderCore::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
                              VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
                              VDeleter<VkImage> &image, VDeleter<VkDeviceMemory> &imageMemory) {
+
   VkImageCreateInfo imageInfo = {};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -1496,55 +1516,51 @@ void RenderCore::initVulkan_createDepthResources() {
                         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
+void RenderCore::copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height) {
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+  VkImageSubresourceLayers subResource = {};
+  subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subResource.baseArrayLayer = 0;
+  subResource.mipLevel = 0;
+  subResource.layerCount = 1;
+
+  VkImageCopy region = {};
+  region.srcSubresource = subResource;
+  region.dstSubresource = subResource;
+  region.srcOffset = {0, 0, 0};
+  region.dstOffset = {0, 0, 0};
+  region.extent.width = width;
+  region.extent.height = height;
+  region.extent.depth = 1;
+
+  vkCmdCopyImage(
+      commandBuffer,
+      srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1, &region
+  );
+
+  endSingleTimeCommands(commandBuffer);
+}
+
 void RenderCore::initVulkan_createTextureImage() {
   if (!textureImageData.hasData()) return;
 
-  int texWidth = textureImageData.width(), texHeight = textureImageData.height();
+  auto texWidth = static_cast<uint32_t>(textureImageData.width());
+  auto texHeight = static_cast<uint32_t>(textureImageData.height());
 
   VDeleter<VkImage> stagingImage{device, vkDestroyImage};
   VDeleter<VkDeviceMemory> stagingImageMemory{device, vkFreeMemory};
 
+  createImage(texWidth, texHeight,
+              VK_FORMAT_R8G8B8A8_UNORM,
+              VK_IMAGE_TILING_LINEAR,
+              VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+              stagingImage, stagingImageMemory);
+
   VkDeviceSize imageSize = static_cast<VkDeviceSize>(texWidth) * static_cast<VkDeviceSize>(texHeight) * 4;
-
-  VkImageCreateInfo imageInfo = {};
-  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = VK_IMAGE_TYPE_2D;
-  imageInfo.extent.width = static_cast<uint32_t>(texWidth);
-  imageInfo.extent.height = static_cast<uint32_t>(texHeight);
-  imageInfo.extent.depth = 1;
-  imageInfo.mipLevels = 1;
-  imageInfo.arrayLayers = 1;
-
-  imageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  imageInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-
-  imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-
-  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imageInfo.flags = 0; // Optional
-
-  VkResult result = vkCreateImage(device, &imageInfo, nullptr, stagingImage.replace());
-  checkResult(result, "Создание буферного изображения для текстуры");
-
-  VkMemoryRequirements memRequirements; // NOLINT
-  vkGetImageMemoryRequirements(device, stagingImage, &memRequirements);
-
-  std::cout << "      ::: memRequirements.memoryTypeBits = " << memRequirements.memoryTypeBits << std::endl;
-
-  VkMemoryAllocateInfo allocInfo = {};
-  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex = findMemoryTypeIndex(memRequirements.memoryTypeBits,
-                                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                                                  | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-  result = vkAllocateMemory(device, &allocInfo, nullptr, stagingImageMemory.replace());
-  checkResult(result, "Выделение памяти для буферного изображения для текстуры");
-
-  vkBindImageMemory(device, stagingImage, stagingImageMemory, 0);
 
   VkImageSubresource subResource = {};
   subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1554,38 +1570,50 @@ void RenderCore::initVulkan_createTextureImage() {
   VkSubresourceLayout stagingImageLayout; // NOLINT
   vkGetImageSubresourceLayout(device, stagingImage, &subResource, &stagingImageLayout);
 
-  void *dataTo;
-  vkMapMemory(device, stagingImageMemory, 0, imageSize, 0, &dataTo);
+  void *stagingImageData;
+  vkMapMemory(device, stagingImageMemory, 0, imageSize, 0, &stagingImageData);
 
-  auto *dataFrom = textureImageData.data();
+  auto *dataFrom = reinterpret_cast<uint8_t *>(textureImageData.data());
+  auto *dataTo = reinterpret_cast<uint8_t *>(stagingImageData);
 
   if (stagingImageLayout.rowPitch == texWidth * 4) {
-
-#ifdef TRACE
-    std::cout << "Одинарное копирование данных текстуры (это хорошо): расширение "
-              << texWidth << "x" << texHeight << std::endl;
-#endif
-
     memcpy(dataTo, dataFrom, (size_t) imageSize);
-
   } else {
 
-#ifdef TRACE
-    std::cout << "Построковое копирование данных текстуры: расширение "
-              << texWidth << "x" << texHeight << std::endl;
-#endif
-
-    auto dataBytesTo = reinterpret_cast<uint8_t *>(dataTo);
-    auto dataBytesFrom = reinterpret_cast<uint8_t *>(dataFrom);
-
     for (int y = 0; y < texHeight; y++) {
-      memcpy(&dataBytesTo[y * stagingImageLayout.rowPitch],
-             &dataBytesFrom[y * texWidth * 4],
-             static_cast<size_t>(texWidth) * 4
-      );
+      memcpy(&dataTo[y * stagingImageLayout.rowPitch],
+             &dataFrom[y * texWidth * 4],
+             static_cast<size_t>(texWidth) * 4);
     }
+
   }
 
   vkUnmapMemory(device, stagingImageMemory);
+
+  textureImageData.clean();
+
+  createImage(texWidth, texHeight,
+              VK_FORMAT_R8G8B8A8_UNORM,
+              VK_IMAGE_TILING_OPTIMAL,
+              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+              textureImage, textureImageMemory);
+
+  transitionImageLayout(stagingImage,
+                        VK_FORMAT_R8G8B8A8_UNORM,
+                        VK_IMAGE_LAYOUT_PREINITIALIZED,
+                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+  transitionImageLayout(textureImage,
+                        VK_FORMAT_R8G8B8A8_UNORM,
+                        VK_IMAGE_LAYOUT_PREINITIALIZED,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+  copyImage(stagingImage, textureImage, texWidth, texHeight);
+
+  transitionImageLayout(textureImage,
+                        VK_FORMAT_R8G8B8A8_UNORM,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 }
