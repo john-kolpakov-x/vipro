@@ -16,19 +16,31 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
 out gl_PerVertex {
-    vec4 gl_Position;
+  vec4 gl_Position;
 };
 
 void main() {
 //    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
 //    gl_Position = vec4(inPosition, 1.0);
 
-    if (2 <= inColor.r && inColor.r <= 3) {
-      gl_Position = ubo.projection2 * vec4(inPosition, 1.0);
-      fragColor = inColor - 2;
-    } else {
+    if (0.0 <= inColor.r && inColor.r <= 1.0) {
+
       gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPosition, 1.0);
       fragColor = inColor;
+
+    } else if (2.0 <= inColor.r && inColor.r <= 3.0) {
+
+      gl_Position = ubo.projection2 * vec4(inPosition, 1.0);
+      fragColor = inColor - 2;
+
+    } else if (4.0 <= inColor.r && inColor.r <= 5.0) {
+
+      gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPosition, 1.0);
+      fragColor = inColor;
+
+    } else {
+      gl_Position = vec4(inPosition, 1.0);
+      fragColor = vec3(0, 0, 0);
     }
 
     fragTexCoord = inTexCoord;

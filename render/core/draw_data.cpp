@@ -13,6 +13,19 @@ static Figure getPlane() {
   return ret;
 }
 
+static Figure getRect() {
+  Figure ret = {};
+  ret.vertices = {
+      {{+0.00f, +0.00f, +0.955f}, {0.0f, 0.5f, 1.0f}, {0, 0}},
+      {{+0.85f, +0.00f, +0.955f}, {0.0f, 0.5f, 1.0f}, {1, 0}},
+      {{+0.85f, +0.85f, +0.955f}, {0.0f, 0.7f, 0.0f}, {1, 1}},
+      {{+0.00f, +0.85f, +0.955f}, {0.0f, 1.0f, 1.0f}, {0, 1}},
+  };
+  ret.indices = {0, 1, 2, 0, 2, 3,};
+
+  return ret;
+}
+
 static Figure getCube() {
   Figure ret = {};
   ret.vertices = {
@@ -37,24 +50,11 @@ static Figure getCube() {
   return ret;
 }
 
-static Figure getRect() {
-  Figure ret = {};
-  ret.vertices = {
-      {{+0.80f, +0.80f, +0.8f}, {0.0f, 0.5f, 1.0f}, {0, 0}},
-      {{+0.85f, +0.80f, +0.8f}, {0.0f, 0.5f, 1.0f}, {0, 0}},
-      {{+0.85f, +0.85f, +0.8f}, {0.0f, 0.7f, 0.0f}, {0, 0}},
-      {{+0.80f, +0.85f, +0.8f}, {0.0f, 1.0f, 1.0f}, {0, 0}},
-  };
-  ret.indices = {0, 1, 2, 0, 2, 3,};
-
-  return ret;
-}
-
 Figure getTotalFigure() {
   Figure ret = {};
-//  ret.append(getCube());
-  ret.append(getPlane());
-//  ret.append(getRect(), +2);
+  ret.append(getCube());
+  ret.append(getPlane(), +4);
+  ret.append(getRect(), +2);
   return ret;
 }
 
