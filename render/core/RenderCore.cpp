@@ -79,6 +79,8 @@ void RenderCore::initVulkan() {
   initVulkan_createDepthResources();
   initVulkan_createFrameBuffers();
   initVulkan_createTextureImage();
+  initVulkan_createTextureImageView();
+  initVulkan_createTextureSampler();
   initVulkan_createVertexBuffer();
   initVulkan_createIndexBuffer();
   initVulkan_createUniformBuffer();
@@ -252,6 +254,8 @@ void RenderCore::initVulkan_setupDebugCallback() {
   checkResult(result, "Установка Debug Callback");
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj,
                                size_t location, int32_t code, const char *layerPrefix, const char *msg) {
 
@@ -267,6 +271,7 @@ bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectT
 
   return false;
 }
+#pragma clang diagnostic pop
 
 RenderCore::~RenderCore() {
   glfwDestroyWindow(window);
@@ -540,25 +545,7 @@ void RenderCore::initVulkan_createImageViews() {
   swapChainImageViews.resize(swapChainImages.size(), VDeleter<VkImageView>{device, vkDestroyImageView});
 
   for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-    VkImageViewCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    createInfo.image = swapChainImages[i];
-    createInfo.format = swapChainImageFormat;
-    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    createInfo.subresourceRange.baseMipLevel = 0;
-    createInfo.subresourceRange.levelCount = 1;
-    createInfo.subresourceRange.baseArrayLayer = 0;
-    createInfo.subresourceRange.layerCount = 1;
-
-    VkResult result = vkCreateImageView(device, &createInfo, nullptr, swapChainImageViews[i].replace());
-    std::ostringstream out;
-    out << "Создание Image View " << i + 1 << " из " << swapChainImages.size();
-    checkResult(result, out.str());
+    createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, swapChainImageViews[i]);
   }
 }
 
@@ -1167,10 +1154,19 @@ void RenderCore::initVulkan_createDescriptorSetLayout() {
   uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
+  VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+  samplerLayoutBinding.binding = 1;
+  samplerLayoutBinding.descriptorCount = 1;
+  samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  samplerLayoutBinding.pImmutableSamplers = nullptr;
+  samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+  std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+
   VkDescriptorSetLayoutCreateInfo layoutInfo = {};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  layoutInfo.bindingCount = 1;
-  layoutInfo.pBindings = &uboLayoutBinding;
+  layoutInfo.bindingCount = bindings.size();
+  layoutInfo.pBindings = bindings.data();
 
   VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, descriptorSetLayout.replace());
   checkResult(result, "Создание DescriptorSetLayout");
@@ -1217,14 +1213,16 @@ void RenderCore::updateUniformBuffer() {
 }
 
 void RenderCore::initVulkan_createDescriptorPool() {
-  VkDescriptorPoolSize poolSize = {};
-  poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSize.descriptorCount = 1;
+  std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizes[0].descriptorCount = 1;
+  poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  poolSizes[1].descriptorCount = 1;
 
   VkDescriptorPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  poolInfo.poolSizeCount = 1;
-  poolInfo.pPoolSizes = &poolSize;
+  poolInfo.poolSizeCount = poolSizes.size();
+  poolInfo.pPoolSizes = poolSizes.data();
 
   poolInfo.maxSets = 1;
 
@@ -1248,20 +1246,30 @@ void RenderCore::initVulkan_createDescriptorSet() {
   bufferInfo.offset = 0;
   bufferInfo.range = sizeof(UniformBufferObject);
 
-  VkWriteDescriptorSet descriptorWrite = {};
-  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrite.dstSet = descriptorSet;
-  descriptorWrite.dstBinding = 0;
-  descriptorWrite.dstArrayElement = 0;
+  VkDescriptorImageInfo imageInfo = {};
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageInfo.imageView = textureImageView;
+  imageInfo.sampler = textureSampler;
 
-  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorWrite.descriptorCount = 1;
+  std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 
-  descriptorWrite.pBufferInfo = &bufferInfo;
-  descriptorWrite.pImageInfo = nullptr; // Optional
-  descriptorWrite.pTexelBufferView = nullptr; // Optional
+  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrites[0].dstSet = descriptorSet;
+  descriptorWrites[0].dstBinding = 0;
+  descriptorWrites[0].dstArrayElement = 0;
+  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrites[0].descriptorCount = 1;
+  descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-  vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+  descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrites[1].dstSet = descriptorSet;
+  descriptorWrites[1].dstBinding = 1;
+  descriptorWrites[1].dstArrayElement = 0;
+  descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  descriptorWrites[1].descriptorCount = 1;
+  descriptorWrites[1].pImageInfo = &imageInfo;
+
+  vkUpdateDescriptorSets(device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
 void RenderCore::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
@@ -1392,7 +1400,7 @@ void RenderCore::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 
 void
 RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
-  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
 
   VkImageMemoryBarrier barrier = {};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1433,6 +1441,8 @@ RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout 
   } else {
     throw std::invalid_argument("unsupported layout transition!");
   }
+
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   vkCmdPipelineBarrier(
       commandBuffer,
@@ -1616,4 +1626,28 @@ void RenderCore::initVulkan_createTextureImage() {
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+}
+
+void RenderCore::initVulkan_createTextureImageView() {
+  createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, textureImageView);
+}
+
+void RenderCore::initVulkan_createTextureSampler() {
+  VkSamplerCreateInfo samplerInfo = {};
+  samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerInfo.magFilter = VK_FILTER_LINEAR;
+  samplerInfo.minFilter = VK_FILTER_LINEAR;
+  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.anisotropyEnable = VK_TRUE;
+  samplerInfo.maxAnisotropy = 16;
+  samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  samplerInfo.unnormalizedCoordinates = VK_FALSE;
+  samplerInfo.compareEnable = VK_FALSE;
+  samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+  VkResult result = vkCreateSampler(device, &samplerInfo, nullptr, textureSampler.replace());
+  checkResult(result, "Создание Texture Sampler");
 }

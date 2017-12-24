@@ -182,6 +182,10 @@ private:
   void initVulkan_createTextureImage();
 
   void copyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+
+  void initVulkan_createTextureImageView();
+
+  void initVulkan_createTextureSampler();
 };
 
 #endif //VIPRO_RENDER_CORE_RENDER_CORE_H
