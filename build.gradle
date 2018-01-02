@@ -1,4 +1,3 @@
-
 allprojects {
   apply plugin: 'java'
   apply plugin: 'maven'
@@ -14,25 +13,15 @@ allprojects {
     natures 'org.springsource.ide.eclipse.gradle.core.nature'
   }
 
-  sourceSets {
-    main {
-      java.srcDirs = ["src"]
-      resources.srcDirs = ["src", "src_resources"]
-      output.resourcesDir = "build/classes/main"
-    }
-    test {
-      java.srcDirs = ["test_src"]
-      resources.srcDirs = ["test_src", "test_resources"]
-      output.resourcesDir = "build/classes/test"
-    }
-  }
+  sourceSets.main.java.srcDirs = ["src"]
+  sourceSets.main.resources.srcDirs = ["src", "src_resources"]
+  sourceSets.main.output.resourcesDir = "build/main_classes"
+  sourceSets.test.java.srcDirs = ["test_src"]
+  sourceSets.test.resources.srcDirs = ["test_src", "test_resources"]
+  sourceSets.test.output.resourcesDir = "build/test_classes"
 
-  compileJava {
-    options.encoding = "UTF-8"
-  }
-  compileTestJava {
-    options.encoding = "UTF-8"
-  }
+  compileJava.options.encoding = "UTF-8"
+  compileTestJava.options.encoding = "UTF-8"
 
   repositories {
     mavenCentral()
@@ -43,7 +32,9 @@ allprojects {
   }
 }
 
-dependencies {
-  compile 'org.easytesting:fest-assert:1.4'
-  compile group: 'cglib', name: 'cglib', version: '3.2.4'
+subprojects {
+  dependencies {
+    compile 'org.easytesting:fest-assert:1.4'
+    compile group: 'cglib', name: 'cglib', version: '3.2.4'
+  }
 }
