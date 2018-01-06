@@ -71,6 +71,8 @@ const char *surfaceFormatName(VkFormat format);
 
 const char *colorSpaceName(VkColorSpaceKHR colorSpace);
 
+const char *VkDebugReportObjectTypeEXT_name(VkDebugReportObjectTypeEXT objType);
+
 std::string VkExtent2D_to_str(const VkExtent2D &value);
 
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
@@ -83,8 +85,10 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, int wi
 
 bool hasStencilComponent(VkFormat format);
 
-std::string VkAccessFlags_toStr(VkAccessFlags m);
+std::string VkAccessFlags_toStr(VkAccessFlags mask);
 
 std::string VkPipelineStageFlags_toStr(VkPipelineStageFlags mask);
+
+std::string VkDebugReportFlagsEXT_toStr(VkDebugReportFlagsEXT mask);
 
 #endif //VIPRO_RENDER_CORE_VK_UTIL_H

@@ -21,8 +21,13 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCDFAInspection"
+
 RenderCore::RenderCore() : width(800), height(600)// NOLINT
 {}
+
+#pragma clang diagnostic pop
 
 int RenderCore::getWidth() {
   return width;
@@ -246,7 +251,14 @@ void RenderCore::initVulkan_setupDebugCallback() {
 
   VkDebugReportCallbackCreateInfoEXT createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-  createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+
+  createInfo.flags = 0;
+//  createInfo.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
+  createInfo.flags |= VK_DEBUG_REPORT_WARNING_BIT_EXT;
+//  createInfo.flags |= VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+  createInfo.flags |= VK_DEBUG_REPORT_ERROR_BIT_EXT;
+//  createInfo.flags |= VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+
   createInfo.pfnCallback = debugCallbackStatic;
   createInfo.pUserData = this;
 
@@ -257,18 +269,19 @@ void RenderCore::initVulkan_setupDebugCallback() {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj,
-                               size_t location, int32_t code, const char *layerPrefix, const char *msg) {
+bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags,
+                               VkDebugReportObjectTypeEXT objType,
+                               uint64_t obj, size_t location, int32_t code,
+                               const char *layerPrefix,
+                               const char *errorMessage) {
 
-  //TODO debug call back
-  std::cerr << "Validation layer: " << msg << std::endl;
-//  std::cerr << "    flags: " << flags << std::endl;
-//  std::cerr << "    objType: " << objType << std::endl;
-//  std::cerr << "    obj: " << obj << std::endl;
-//  std::cerr << "    location: " << location << std::endl;
-//  std::cerr << "    code: " << code << std::endl;
-//  std::cerr << "    layerPrefix: " << layerPrefix << std::endl;
-//  std::cerr << std::endl;
+  std::cerr << "[VulkanValidation] ["
+            << VkDebugReportFlagsEXT_toStr(flags)
+            << "] ["
+            << VkDebugReportObjectTypeEXT_name(objType)
+            << "] [" << layerPrefix
+            << "] "
+            << errorMessage << std::endl;
 
   return false;
 }

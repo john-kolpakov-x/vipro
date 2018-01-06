@@ -147,7 +147,7 @@ private:
   bool debugCallback(
       VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
       uint64_t obj, size_t location, int32_t code,
-      const char *layerPrefix, const char *msg);
+      const char *layerPrefix, const char *errorMessage);
 
   bool checkDeviceExtensionSupport(VkPhysicalDevice aPhysicalDevice);
 
