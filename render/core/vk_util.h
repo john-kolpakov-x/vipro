@@ -83,4 +83,8 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, int wi
 
 bool hasStencilComponent(VkFormat format);
 
+std::string VkAccessFlags_toStr(VkAccessFlags m);
+
+std::string VkPipelineStageFlags_toStr(VkPipelineStageFlags mask);
+
 #endif //VIPRO_RENDER_CORE_VK_UTIL_H

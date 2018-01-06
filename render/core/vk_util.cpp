@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iostream>
 #include <limits>
+#include <iomanip>
 #include "vk_util.h"
 #include "RenderCore.h"
 
@@ -697,4 +698,82 @@ std::string VkExtent2D_to_str(const VkExtent2D &value) {
 
 bool hasStencilComponent(VkFormat format) {
   return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+static void putBit(std::ostringstream &out, bool &f, const char *p,
+                   unsigned long mask,
+                   unsigned long flag,
+                   const char *name) {
+  if (!(mask & flag)) return;
+  if (f) {
+    out << " = ";
+    f = false;
+  } else {
+    out << " | ";
+  }
+  out << p << name;
+}
+
+std::string VkAccessFlags_toStr(const VkAccessFlags m) {
+  std::ostringstream o;
+  o << "VkAccessFlags{";
+  o << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << m;
+  bool f = true;
+  static const char *p = "VK_ACCESS_";
+
+  putBit(o, f, p, m, VK_ACCESS_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT, "COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT");
+  putBit(o, f, p, m, VK_ACCESS_COMMAND_PROCESS_WRITE_BIT_NVX, "COMMAND_PROCESS_WRITE_BIT_NVX");
+  putBit(o, f, p, m, VK_ACCESS_COMMAND_PROCESS_READ_BIT_NVX, "COMMAND_PROCESS_READ_BIT_NVX");
+  putBit(o, f, p, m, VK_ACCESS_MEMORY_WRITE_BIT, "MEMORY_WRITE_BIT");
+  putBit(o, f, p, m, VK_ACCESS_MEMORY_READ_BIT, "MEMORY_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_HOST_WRITE_BIT, "HOST_WRITE_BIT");
+  putBit(o, f, p, m, VK_ACCESS_HOST_READ_BIT, "HOST_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_TRANSFER_WRITE_BIT, "TRANSFER_WRITE_BIT");
+  putBit(o, f, p, m, VK_ACCESS_TRANSFER_READ_BIT, "TRANSFER_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, "DEPTH_STENCIL_ATTACHMENT_WRITE_BIT");
+  putBit(o, f, p, m, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, "DEPTH_STENCIL_ATTACHMENT_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, "COLOR_ATTACHMENT_WRITE_BIT");
+  putBit(o, f, p, m, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT, "COLOR_ATTACHMENT_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_SHADER_WRITE_BIT, "SHADER_WRITE_BIT");
+  putBit(o, f, p, m, VK_ACCESS_SHADER_READ_BIT, "SHADER_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_INPUT_ATTACHMENT_READ_BIT, "INPUT_ATTACHMENT_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_UNIFORM_READ_BIT, "UNIFORM_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, "VERTEX_ATTRIBUTE_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_INDEX_READ_BIT, "INDEX_READ_BIT");
+  putBit(o, f, p, m, VK_ACCESS_INDIRECT_COMMAND_READ_BIT, "INDIRECT_COMMAND_READ_BIT");
+
+  o << "}";
+
+  return o.str();
+}
+
+std::string VkPipelineStageFlags_toStr(VkPipelineStageFlags mask) {
+  std::ostringstream out;
+  out << "VkPipelineStageFlags{";
+  out << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << mask;
+  bool f = true;
+  static const char *p = "VK_PIPELINE_STAGE_";
+
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX, "COMMAND_PROCESS_BIT_NVX");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, "ALL_COMMANDS_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, "ALL_GRAPHICS_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_HOST_BIT, "HOST_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, "BOTTOM_OF_PIPE_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_TRANSFER_BIT, "TRANSFER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, "COMPUTE_SHADER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, "COLOR_ATTACHMENT_OUTPUT_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, "LATE_FRAGMENT_TESTS_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, "EARLY_FRAGMENT_TESTS_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, "FRAGMENT_SHADER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT, "GEOMETRY_SHADER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT, "TESSELLATION_EVALUATION_SHADER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT, "TESSELLATION_CONTROL_SHADER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, "VERTEX_SHADER_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, "VERTEX_INPUT_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT, "DRAW_INDIRECT_BIT");
+  putBit(out, f, p, mask, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, "TOP_OF_PIPE_BIT");
+
+  out << "}";
+
+  return out.str();
 }

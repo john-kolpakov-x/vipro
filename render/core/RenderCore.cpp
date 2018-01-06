@@ -256,6 +256,7 @@ void RenderCore::initVulkan_setupDebugCallback() {
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+
 bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj,
                                size_t location, int32_t code, const char *layerPrefix, const char *msg) {
 
@@ -271,6 +272,7 @@ bool RenderCore::debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectT
 
   return false;
 }
+
 #pragma clang diagnostic pop
 
 RenderCore::~RenderCore() {
@@ -1398,6 +1400,74 @@ void RenderCore::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
   vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+static void defineLayoutBarrierMasks(VkImageLayout oldLayout, VkImageLayout newLayout,
+                                     VkImageMemoryBarrier &barrier,
+                                     VkPipelineStageFlags &srcStageMask, VkPipelineStageFlags &dstStageMask) {
+  srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+  if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+
+    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+    srcStageMask |= VK_PIPELINE_STAGE_HOST_BIT;
+
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    dstStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+#ifdef  TRACE
+    std::cout << "--------------------------- vkCmdPipelineBarrier() - SWITCH 1" << std::endl;
+#endif
+    return;
+  }
+
+  if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+
+    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+    srcStageMask |= VK_PIPELINE_STAGE_HOST_BIT;
+
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    dstStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+#ifdef  TRACE
+    std::cout << "--------------------------- vkCmdPipelineBarrier() - SWITCH 2" << std::endl;
+#endif
+    return;
+
+  }
+
+  if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    srcStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    dstStageMask |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+#ifdef  TRACE
+    std::cout << "--------------------------- vkCmdPipelineBarrier() - SWITCH 3" << std::endl;
+#endif
+    return;
+  }
+
+  if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+
+    barrier.srcAccessMask = 0;
+
+    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dstStageMask |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+#ifdef  TRACE
+    std::cout << "--------------------------- vkCmdPipelineBarrier() - SWITCH 4" << std::endl;
+#endif
+    return;
+  }
+
+
+  throw std::invalid_argument("unsupported layout transition!");
+
+
+}
+
 void
 RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
 
@@ -1425,28 +1495,24 @@ RenderCore::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout 
   barrier.subresourceRange.baseArrayLayer = 0;
   barrier.subresourceRange.layerCount = 1;
 
-  if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
-    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-  } else if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-  } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-             newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-    barrier.srcAccessMask = 0;
-    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-  } else {
-    throw std::invalid_argument("unsupported layout transition!");
-  }
+  VkPipelineStageFlags srcStageMask, dstStageMask;
+
+  defineLayoutBarrierMasks(oldLayout, newLayout, barrier, srcStageMask, dstStageMask);
+
+#ifdef  TRACE
+  std::cout
+      << "--------------------------- vkCmdPipelineBarrier()" << std::endl
+      << "                  barrier.srcAccessMask = " << VkAccessFlags_toStr(barrier.srcAccessMask) << std::endl
+      << "                  srcStageMask = " << VkPipelineStageFlags_toStr(srcStageMask) << std::endl
+      << std::endl
+      << "                  barrier.dstAccessMask = " << VkAccessFlags_toStr(barrier.dstAccessMask) << std::endl
+      << "                  dstStageMask = " << VkPipelineStageFlags_toStr(dstStageMask) << std::endl;
+#endif
 
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   vkCmdPipelineBarrier(
-      commandBuffer,
-      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      commandBuffer, srcStageMask, dstStageMask,
       0,
       0, nullptr,
       0, nullptr,
@@ -1641,7 +1707,7 @@ void RenderCore::initVulkan_createTextureSampler() {
   samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.anisotropyEnable = VK_TRUE;
-  samplerInfo.maxAnisotropy = 16;
+  samplerInfo.maxAnisotropy = 1;//16;
   samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   samplerInfo.unnormalizedCoordinates = VK_FALSE;
   samplerInfo.compareEnable = VK_FALSE;
